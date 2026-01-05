@@ -5,7 +5,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black?style=for-the-badge&logo=next.js)
 ![React](https://img.shields.io/badge/React-19.0.0-61DAFB?style=for-the-badge&logo=react)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+
 
 **A modern, fully customizable portfolio website with an admin dashboard for dynamic content management**
 
@@ -161,11 +161,11 @@ graph TB
         L --> N[SMTP Server]
     end
 
-    style A fill:#61DAFB
-    style B fill:#000000
-    style J fill:#47A248
-    style K fill:#3448C5
-    style L fill:#0078D4
+    style A fill:#61DAFB,stroke:#333,stroke-width:2px,color:#fff
+    style B fill:#000000,stroke:#333,stroke-width:2px,color:#fff
+    style J fill:#47A248,stroke:#333,stroke-width:2px,color:#fff
+    style K fill:#3448C5,stroke:#333,stroke-width:2px,color:#fff
+    style L fill:#0078D4,stroke:#333,stroke-width:2px,color:#fff
 ```
 
 ### Architecture Flow
@@ -322,28 +322,28 @@ Edit `.env.local` with your credentials:
 
 ```env
 # MongoDB Connection
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/portfolio
+MONGODB_URI=
 
 # NextAuth Configuration
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-key-here
+NEXTAUTH_URL=
+NEXTAUTH_SECRET=
 
 # Cloudinary Configuration
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 
 # Email Configuration (Gmail Example)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
-EMAIL_FROM=your-email@gmail.com
-EMAIL_TO=recipient@example.com
+EMAIL_HOST=
+EMAIL_PORT=
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_FROM=
+EMAIL_TO=
 
 # Admin Credentials
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=your-secure-password
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
 ```
 
 > [!TIP] > **Generate NEXTAUTH_SECRET**: Run `openssl rand -base64 32` in terminal
@@ -495,6 +495,53 @@ sequenceDiagram
     Frontend->>NextAuth: Verify JWT
     NextAuth-->>Frontend: Authorized
     Frontend-->>User: Show admin panel
+
+    Note over User,Frontend: Login Flow
+    Note over Frontend,MongoDB: Authentication & Authorization
+```
+
+### API Data Flow
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant NextJS
+    participant API
+    participant MongoDB
+
+    Browser->>NextJS: Request page (/)
+    NextJS->>API: Fetch bio, skills, experience
+    API->>MongoDB: Query collections
+    MongoDB-->>API: Return data
+    API-->>NextJS: JSON response
+    NextJS-->>Browser: Render SSR page
+
+    Note over Browser,NextJS: Server-Side Rendering
+    Note over API,MongoDB: Data Fetching
+```
+
+### Image Upload Flow
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Frontend
+    participant API
+    participant Cloudinary
+    participant MongoDB
+
+    Admin->>Frontend: Select image
+    Frontend->>API: POST /api/upload
+    API->>Cloudinary: Upload image
+    Cloudinary-->>API: Image URL
+    API->>MongoDB: Save URL to database
+    MongoDB-->>API: Success
+    API-->>Frontend: Return image URL
+    Frontend-->>Admin: Show uploaded image
+
+    Note over Admin,Frontend: File Selection
+    Note over API,Cloudinary: Cloud Storage
+    Note over MongoDB: URL Persistence
 ```
 
 ### API Endpoints
@@ -610,11 +657,11 @@ graph TD
     F --> P[Edit Experience]
     F --> Q[Delete Experience]
 
-    style A fill:#FF6B6B
-    style C fill:#4ECDC4
-    style D fill:#95E1D3
-    style E fill:#95E1D3
-    style F fill:#95E1D3
+    style A fill:#FF6B6B,stroke:#333,stroke-width:2px,color:#fff
+    style C fill:#4ECDC4,stroke:#333,stroke-width:2px,color:#fff
+    style D fill:#95E1D3,stroke:#333,stroke-width:2px,color:#000
+    style E fill:#95E1D3,stroke:#333,stroke-width:2px,color:#000
+    style F fill:#95E1D3,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ### Admin Features
@@ -777,24 +824,6 @@ pnpm run analyze      # Analyze bundle size
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📝 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 🙏 Acknowledgments
 
 - [Next.js](https://nextjs.org/) - The React Framework
@@ -808,7 +837,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 📞 Support
 
-For support, email your-email@example.com or open an issue on GitHub.
+For support, email shantokumar00@gmail.com or open an issue on GitHub.
 
 ---
 
