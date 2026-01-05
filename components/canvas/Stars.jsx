@@ -4,18 +4,37 @@ import React, { useRef, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Points, PointMaterial, Preload } from "@react-three/drei";
 import { useTheme } from "styled-components";
-import * as random from "maath/random/dist/maath-random.esm";
 
 const Stars = ({ color, ...props }) => {
   const ref = useRef(null);
-  const [sphere] = React.useState(() =>
-    random.inSphere(new Float32Array(5001), { radius: 1.2 })
-  );
+  const [sphere] = React.useState(() => {
+    // Pure mathematical sphere generation
+    const numStars = 600; // 600 stars * 3 coordinates = 1800 total values
+    const positions = new Float32Array(numStars * 3);
+
+    for (let i = 0; i < positions.length; i += 3) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const radius = Math.cbrt(Math.random()) * 1.2;
+
+      positions[i] = radius * Math.sin(phi) * Math.cos(theta);
+      positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      positions[i + 2] = radius * Math.cos(phi);
+    }
+
+    // Validate - check for any NaN
+    const hasInvalid = positions.some((v) => !isFinite(v));
+    if (hasInvalid) {
+      console.error("Generated positions contain NaN/Infinity!");
+    }
+
+    return positions;
+  });
 
   useFrame((state, delta) => {
     if (ref.current) {
-      ref.current.rotation.x -= delta / 10;
-      ref.current.rotation.y -= delta / 15;
+      ref.current.rotation.x -= delta * 0.02;
+      ref.current.rotation.y -= delta * 0.01;
     }
   });
 
@@ -48,11 +67,14 @@ const StarsCanvas = () => {
         inset: 0,
       }}
     >
-      <Canvas camera={{ position: [0, 0, 1] }}>
+      <Canvas
+        camera={{ position: [0, 0, 1] }}
+        dpr={1}
+        performance={{ min: 0.5 }}
+      >
         <Suspense fallback={null}>
           <Stars color={starColor} />
         </Suspense>
-        <Preload all />
       </Canvas>
     </div>
   );

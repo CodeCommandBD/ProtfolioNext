@@ -1,10 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import styled from "styled-components";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FaUser,
+  FaEnvelope,
+  FaPen,
+  FaPaperPlane,
+  FaCheckCircle,
+} from "react-icons/fa";
+import { MdSubject } from "react-icons/md";
 
 const Container = styled.div`
   display: flex;
@@ -65,95 +74,130 @@ const ContactForm = styled.form`
   border-radius: 12px;
   box-shadow: rgba(23, 92, 230, 0.1) 0px 4px 24px;
   margin-top: 28px;
-  gap: 12px;
+  gap: 16px;
+  backdrop-filter: blur(10px);
 `;
 
 const ContactTitle = styled.div`
   font-size: 28px;
   margin-bottom: 6px;
   font-weight: 600;
-  color: #ffffff;
+  color: ${({ theme }) => theme.white};
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const IconWrapper = styled.div`
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  color: ${({ theme }) => theme.white + 80};
+  z-index: 1;
 `;
 
 const ContactInput = styled.input`
-  flex: 1;
+  width: 100%;
   background-color: transparent;
-  border: 1px solid ${({ theme }) => theme.text_secondary + 50};
+  border: 1px solid
+    ${({ theme, error }) => (error ? "#ff6b6b" : theme.text_secondary + 50)};
   outline: none;
-  font-size: 18px;
-  color: #ffffff;
+  font-size: 16px;
+  color: ${({ theme }) => theme.white};
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 12px 16px 12px 42px;
+  transition: all 0.3s ease;
+
   &:focus {
-    border: 1px solid ${({ theme }) => theme.primary};
+    border: 1px solid
+      ${({ theme, error }) => (error ? "#ff6b6b" : theme.primary)};
+    box-shadow: 0 0 0 2px
+      ${({ theme, error }) =>
+        error ? "rgba(255, 107, 107, 0.2)" : theme.primary + "33"};
   }
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: ${({ theme }) => theme.text_secondary + 80};
   }
 `;
 
 const ContactInputMessage = styled.textarea`
-  flex: 1;
+  width: 100%;
   background-color: transparent;
-  border: 1px solid ${({ theme }) => theme.text_secondary + 50};
+  border: 1px solid
+    ${({ theme, error }) => (error ? "#ff6b6b" : theme.text_secondary + 50)};
   outline: none;
-  font-size: 18px;
-  color: #ffffff;
+  font-size: 16px;
+  color: ${({ theme }) => theme.white};
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 12px 16px 12px 42px;
+  transition: all 0.3s ease;
+  resize: vertical;
+  min-height: 120px;
+
   &:focus {
-    border: 1px solid ${({ theme }) => theme.primary};
+    border: 1px solid
+      ${({ theme, error }) => (error ? "#ff6b6b" : theme.primary)};
+    box-shadow: 0 0 0 2px
+      ${({ theme, error }) =>
+        error ? "rgba(255, 107, 107, 0.2)" : theme.primary + "33"};
   }
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: ${({ theme }) => theme.text_secondary + 80};
   }
 `;
 
-const ContactButton = styled.button`
+const ContactButton = styled(motion.button)`
   width: 100%;
   text-decoration: none;
   text-align: center;
-  background: hsla(271, 100%, 50%, 1);
   background: linear-gradient(
     225deg,
     hsla(271, 100%, 50%, 1) 0%,
     hsla(294, 100%, 50%, 1) 100%
   );
-  background: -moz-linear-gradient(
-    225deg,
-    hsla(271, 100%, 50%, 1) 0%,
-    hsla(294, 100%, 50%, 1) 100%
-  );
-  background: -webkit-linear-gradient(
-    225deg,
-    hsla(271, 100%, 50%, 1) 0%,
-    hsla(294, 100%, 50%, 1) 100%
-  );
-  padding: 13px 16px;
-  margin-top: 2px;
+  padding: 14px 16px;
+  margin-top: 8px;
   border-radius: 12px;
   border: none;
-  color: #ffffff;
+  color: white;
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
   }
 `;
 
-const ErrorMessage = styled.span`
+const ErrorMessage = styled(motion.span)`
   color: #ff6b6b;
-  font-size: 14px;
-  margin-top: -8px;
+  font-size: 12px;
+  margin-top: -12px;
+  margin-left: 4px;
+  display: block;
 `;
 
-const SuccessMessage = styled.div`
+const SuccessMessage = styled(motion.div)`
   color: #51cf66;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 500;
   text-align: center;
-  margin-top: 8px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(81, 207, 102, 0.1);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #51cf66;
 `;
 
 const contactSchema = z.object({
@@ -174,6 +218,7 @@ const Contact = () => {
     reset,
   } = useForm({
     resolver: zodResolver(contactSchema),
+    mode: "onChange",
   });
 
   const onSubmit = async (data) => {
@@ -213,37 +258,123 @@ const Contact = () => {
         </Desc>
         <ContactForm onSubmit={handleSubmit(onSubmit)}>
           <ContactTitle>Email Me 🚀</ContactTitle>
-          <ContactInput placeholder="Your Name" {...register("name")} />
-          {errors.name && <ErrorMessage>{errors.name.message}</ErrorMessage>}
 
-          <ContactInput
-            placeholder="Your Email"
-            type="email"
-            {...register("email")}
-          />
-          {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
+          <InputWrapper>
+            <IconWrapper>
+              <FaUser />
+            </IconWrapper>
+            <ContactInput
+              placeholder="Your Name"
+              error={errors.name}
+              {...register("name")}
+            />
+          </InputWrapper>
+          <AnimatePresence>
+            {errors.name && (
+              <ErrorMessage
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {errors.name.message}
+              </ErrorMessage>
+            )}
+          </AnimatePresence>
 
-          <ContactInput placeholder="Subject" {...register("subject")} />
-          {errors.subject && (
-            <ErrorMessage>{errors.subject.message}</ErrorMessage>
-          )}
+          <InputWrapper>
+            <IconWrapper>
+              <FaEnvelope />
+            </IconWrapper>
+            <ContactInput
+              placeholder="Your Email"
+              type="email"
+              error={errors.email}
+              {...register("email")}
+            />
+          </InputWrapper>
+          <AnimatePresence>
+            {errors.email && (
+              <ErrorMessage
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {errors.email.message}
+              </ErrorMessage>
+            )}
+          </AnimatePresence>
 
-          <ContactInputMessage
-            placeholder="Message"
-            rows={4}
-            {...register("message")}
-          />
-          {errors.message && (
-            <ErrorMessage>{errors.message.message}</ErrorMessage>
-          )}
+          <InputWrapper>
+            <IconWrapper>
+              <MdSubject size={20} />
+            </IconWrapper>
+            <ContactInput
+              placeholder="Subject"
+              error={errors.subject}
+              {...register("subject")}
+            />
+          </InputWrapper>
+          <AnimatePresence>
+            {errors.subject && (
+              <ErrorMessage
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {errors.subject.message}
+              </ErrorMessage>
+            )}
+          </AnimatePresence>
 
-          <ContactButton type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Sending..." : "Send"}
+          <InputWrapper>
+            <IconWrapper style={{ top: "14px" }}>
+              <FaPen />
+            </IconWrapper>
+            <ContactInputMessage
+              placeholder="Message"
+              rows={4}
+              error={errors.message}
+              {...register("message")}
+            />
+          </InputWrapper>
+          <AnimatePresence>
+            {errors.message && (
+              <ErrorMessage
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {errors.message.message}
+              </ErrorMessage>
+            )}
+          </AnimatePresence>
+
+          <ContactButton
+            type="submit"
+            disabled={isSubmitting}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {isSubmitting ? (
+              "Sending..."
+            ) : (
+              <>
+                Send Message <FaPaperPlane />
+              </>
+            )}
           </ContactButton>
 
-          {submitSuccess && (
-            <SuccessMessage>✓ Message sent successfully!</SuccessMessage>
-          )}
+          <AnimatePresence>
+            {submitSuccess && (
+              <SuccessMessage
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+              >
+                <FaCheckCircle /> Message sent successfully!
+              </SuccessMessage>
+            )}
+          </AnimatePresence>
         </ContactForm>
       </Wrapper>
     </Container>

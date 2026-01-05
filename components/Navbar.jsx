@@ -74,7 +74,7 @@ const ButtonContainer = styled.div`
   }
 `;
 
-const GithubButton = styled.a`
+const ResumeButton = styled.a`
   border: 1px solid ${({ theme }) => theme.primary};
   color: ${({ theme }) => theme.primary};
   justify-content: center;
@@ -129,6 +129,7 @@ const MobileMenu = styled.ul`
 const Navbar = ({ bio }) => {
   const [isOpen, setIsOpen] = useState(false);
   const theme = useTheme();
+  const resumeUrl = bio?.resume || null;
 
   return (
     <Nav>
@@ -170,27 +171,27 @@ const Navbar = ({ bio }) => {
             <div style={{ marginTop: "8px" }}>
               <ThemeToggle />
             </div>
-            {bio?.github && (
-              <GithubButton
-                href={bio.github}
-                target="_blank"
+            {resumeUrl && (
+              <ResumeButton
+                href={resumeUrl}
+                download="Resume.pdf"
                 style={{
                   background: theme.primary,
                   color: theme.text_primary,
                 }}
               >
-                Github Profile
-              </GithubButton>
+                Download Resume
+              </ResumeButton>
             )}
           </MobileMenu>
         )}
 
         <ButtonContainer>
           <ThemeToggle />
-          {bio?.github && (
-            <GithubButton href={bio.github} target="_blank">
-              Github Profile
-            </GithubButton>
+          {resumeUrl && (
+            <ResumeButton href={resumeUrl} download="Resume.pdf">
+              Download Resume
+            </ResumeButton>
           )}
         </ButtonContainer>
       </NavbarContainer>

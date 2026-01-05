@@ -218,8 +218,10 @@ type BioFormData = z.infer<typeof bioSchema>;
 export default function BioManagementPage() {
   const [roles, setRoles] = useState<string[]>(['']);
   const [profileImage, setProfileImage] = useState('');
+  const [resumeUrl, setResumeUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const {
@@ -241,6 +243,7 @@ export default function BioManagementPage() {
           reset(data);
           setRoles(data.roles || ['']);
           setProfileImage(data.profileImage || '');
+          setResumeUrl(data.resume || '');
         }
       } catch (error) {
         console.error('Error fetching bio:', error);
@@ -277,6 +280,56 @@ export default function BioManagementPage() {
     }
   };
 
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      alert('Please upload a PDF file');
+      return;
+    }
+
+    setIsUploadingResume(true);
+    const formData = new FormData();
+    formData.append('resume', file);
+
+    try {
+      const response = await fetch('/api/admin/resume', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.resumeUrl) {
+        setResumeUrl(data.resumeUrl);
+        alert('Resume uploaded successfully!');
+      }
+    } catch (error) {
+      console.error('Error uploading resume:', error);
+      alert('Failed to upload resume');
+    } finally {
+      setIsUploadingResume(false);
+    }
+  };
+
+  const handleResumeDelete = async () => {
+    if (!confirm('Are you sure you want to delete the resume?')) return;
+
+    try {
+      const response = await fetch('/api/admin/resume', {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setResumeUrl('');
+        alert('Resume deleted successfully!');
+      }
+    } catch (error) {
+      console.error('Error deleting resume:', error);
+      alert('Failed to delete resume');
+    }
+  };
+
   const addRole = () => {
     setRoles([...roles, '']);
   };
@@ -291,7 +344,7 @@ export default function BioManagementPage() {
     setRoles(newRoles);
   };
 
-  const onSubmit = async (data: BioFormData) => {
+  const onSubmit = async (data) => {
     setIsLoading(true);
     setSuccess(false);
 
@@ -305,6 +358,7 @@ export default function BioManagementPage() {
           ...data,
           roles: roles.filter((r) => r.trim() !== ''),
           profileImage,
+          resume: resumeUrl,
         }),
       });
 
@@ -441,14 +495,51 @@ export default function BioManagementPage() {
             {errors.facebook && {errors.facebook.message}</ErrorMessage>}
           </FormGroup>
 
-          
-            <Label htmlFor="resume">Resume URL</Label>
-            <Input
-              id="resume"
-              placeholder="https://example.com/resume.pdf"
-              {...register('resume')}
+          <FormGroup>
+            <Label>Resume / CV (PDF)</Label>
+            {resumeUrl ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ 
+                  background: 'rgba(133, 76, 230, 0.1)', 
+                  border: '1px solid rgba(133, 76, 230, 0.3)',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <p style={{ color: '#f2f3f4', marginBottom: '4px', fontWeight: '500' }}>Current Resume</p>
+                    <a 
+                      href={resumeUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ color: '#854ce6', fontSize: '14px' }}
+                    >
+                      View / Download Resume
+                    </a>
+                  </div>
+                  <RemoveButton type="button" onClick={handleResumeDelete}>
+                    Delete
+                  </RemoveButton>
+                </div>
+              </div>
+            ) : (
+              <ImageUploadArea onClick={() => document.getElementById('resume-file')?.click()}>
+                <FiUpload size={32} color="#854ce6" style={{ margin: '0 auto 8px' }} />
+                <p style={{ color: '#b1b2b3' }}>
+                  {isUploadingResume ? 'Uploading...' : 'Click to upload resume (PDF only)'}
+                </p>
+              </ImageUploadArea>
+            )}
+            <input
+              id="resume-file"
+              type="file"
+              accept=".pdf,application/pdf"
+              style={{ display: 'none' }}
+              onChange={handleResumeUpload}
+              disabled={isUploadingResume}
             />
-            {errors.resume && {errors.resume.message}</ErrorMessage>}
           </FormGroup>
 
           <SubmitButton type="submit" disabled={isLoading}>

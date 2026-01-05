@@ -30,8 +30,9 @@ const AnimatedContainer = styled.div`
   &.visible {
     animation: ${({ $animationType }) =>
         $animationType === "fadeInUp" ? fadeInUp : fadeIn}
-      ${({ $duration }) => $duration || "0.6s"} ease-out
-      ${({ $delay }) => $delay || "0s"} forwards;
+      ${({ $duration }) => $duration || "0.6s"}
+      cubic-bezier(0.25, 0.46, 0.45, 0.94) ${({ $delay }) => $delay || "0s"}
+      forwards;
   }
 `;
 

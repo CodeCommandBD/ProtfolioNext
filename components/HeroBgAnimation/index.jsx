@@ -11,6 +11,8 @@ const Div = styled.div`
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  will-change: transform;
+  transform: translateZ(0);
 `;
 
 const HeroBgAnimation = () => {
