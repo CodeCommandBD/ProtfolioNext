@@ -76,28 +76,28 @@ A modern, dynamic portfolio website built with Next.js 15, featuring a custom ad
 
    ```env
    # MongoDB
-   MONGODB_URI=your_mongodb_connection_string
+   MONGODB_URI=
 
    # NextAuth
-   NEXTAUTH_URL=http://localhost:3000
-   NEXTAUTH_SECRET=your_secret_key
+   NEXTAUTH_URL=
+   NEXTAUTH_SECRET=
 
    # Cloudinary
-   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
-   CLOUDINARY_API_KEY=your_api_key
-   CLOUDINARY_API_SECRET=your_api_secret
+   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
+   CLOUDINARY_API_KEY=
+   CLOUDINARY_API_SECRET=
 
    # Email (Gmail example)
-   EMAIL_HOST=smtp.gmail.com
-   EMAIL_PORT=587
-   EMAIL_USER=your_email@gmail.com
-   EMAIL_PASSWORD=your_app_password
-   EMAIL_FROM=your_email@gmail.com
-   EMAIL_TO=recipient@example.com
+   EMAIL_HOST=
+   EMAIL_PORT=
+   EMAIL_USER=
+   EMAIL_PASSWORD=
+   EMAIL_FROM=
+   EMAIL_TO=
 
    # Admin Credentials
-   ADMIN_EMAIL=admin@example.com
-   ADMIN_PASSWORD=your_secure_password
+   ADMIN_EMAIL=
+   ADMIN_PASSWORD=
    ```
 
 4. **Seed the database** (Optional - populates with initial data)
