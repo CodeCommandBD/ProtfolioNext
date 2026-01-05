@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import styled, { useTheme } from 'styled-components';
 import { MenuRounded } from '@mui/icons-material';
+import ThemeToggle from './ThemeToggle';
 
 const Nav = styled.div`
   background-color: ${({ theme }) => theme.bg};
@@ -66,6 +67,7 @@ const ButtonContainer = styled.div`
   display: flex;
   justify-content: end;
   align-items: center;
+  gap: 16px;
   padding: 0 6px;
   @media screen and (max-width: 768px) {
     display: none;
@@ -166,6 +168,9 @@ const Navbar: React.FC<NavbarProps> = ({ bio }) => {
             <NavLink onClick={() => setIsOpen(!isOpen)} href="#Education">
               Education
             </NavLink>
+            <div style={{ marginTop: '8px' }}>
+              <ThemeToggle />
+            </div>
             {bio?.github && (
               <GithubButton
                 href={bio.github}
@@ -182,6 +187,7 @@ const Navbar: React.FC<NavbarProps> = ({ bio }) => {
         )}
 
         <ButtonContainer>
+          <ThemeToggle />
           {bio?.github && (
             <GithubButton href={bio.github} target="_blank">
               Github Profile

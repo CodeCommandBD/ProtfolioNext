@@ -45,7 +45,7 @@ const Details = styled.div`
 const Title = styled.div`
   font-size: 20px;
   font-weight: 600;
-  color: ${({ theme }) => theme.text_secondary};
+  color: #ffffff;
   overflow: hidden;
   display: -webkit-box;
   max-width: 100%;
@@ -58,14 +58,14 @@ const Date = styled.div`
   font-size: 12px;
   margin-left: 2px;
   font-weight: 400;
-  color: ${({ theme }) => theme.text_secondary + 80};
+  color: #ffffff;
   @media only screen and (max-width: 768px) {
     font-size: 10px;
   }
 `;
 const Description = styled.div`
   font-weight: 400;
-  color: ${({ theme }) => theme.text_secondary + 99};
+  color: #ffffff;
   overflow: hidden;
   margin-top: 8px;
   display: -webkit-box;

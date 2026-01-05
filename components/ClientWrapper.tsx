@@ -1,8 +1,10 @@
 "use client";
 
 import styled, { ThemeProvider } from "styled-components";
-import { darkTheme } from "@/lib/utils/themes";
-import { ReactNode } from "react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { darkTheme, lightTheme } from "@/lib/utils/themes";
+import { ReactNode, useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 
 const Body = styled.div`
   background: ${({ theme }) => theme.bg};
@@ -11,6 +13,7 @@ const Body = styled.div`
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
+  transition: background 0.3s ease, color 0.3s ease;
 `;
 
 const Wrapper = styled.div`
@@ -25,11 +28,38 @@ interface ClientWrapperProps {
   children: ReactNode;
 }
 
-export default function ClientWrapper({ children }: ClientWrapperProps) {
+function ThemedContent({ children }: ClientWrapperProps) {
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Prevent flash of unstyled content
+  if (!mounted) {
+    return <ThemeProvider theme={darkTheme}>{children}</ThemeProvider>;
+  }
+
+  const currentTheme = theme === 'light' ? lightTheme : darkTheme;
+
   return (
-    <ThemeProvider theme={darkTheme}>
+    <ThemeProvider theme={currentTheme}>
       {children}
     </ThemeProvider>
+  );
+}
+
+export default function ClientWrapper({ children }: ClientWrapperProps) {
+  return (
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={false}
+      storageKey="portfolio-theme"
+    >
+      <ThemedContent>{children}</ThemedContent>
+    </NextThemesProvider>
   );
 }
 

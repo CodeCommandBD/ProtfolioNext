@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 
 const Div = styled.div`
   width: 100%;
@@ -14,6 +14,12 @@ const Div = styled.div`
 `;
 
 const HeroBgAnimation: React.FC = () => {
+  const theme = useTheme();
+  
+  // Dynamic colors based on theme
+  const gradientStart = theme.text_primary;
+  const gradientEnd = theme.bg;
+  
   return (
     <Div>
       <svg
@@ -28,7 +34,7 @@ const HeroBgAnimation: React.FC = () => {
           maxHeight: '600px',
         }}
       >
-        <g opacity="0.15">
+        <g opacity="0.25">
           <path
             fillRule="evenodd"
             clipRule="evenodd"
@@ -253,8 +259,8 @@ const HeroBgAnimation: React.FC = () => {
             gradientUnits="userSpaceOnUse"
             gradientTransform="translate(301 301) rotate(90) scale(300)"
           >
-            <stop offset="0.333333" stopColor="#FBFBFB" />
-            <stop offset="1" stopColor="white" stopOpacity="0" />
+            <stop offset="0.333333" stopColor={gradientStart} />
+            <stop offset="1" stopColor={gradientEnd} stopOpacity="0" />
           </radialGradient>
           <radialGradient
             id="paint1_radial"
@@ -264,8 +270,8 @@ const HeroBgAnimation: React.FC = () => {
             gradientUnits="userSpaceOnUse"
             gradientTransform="translate(301 301) rotate(90) scale(300)"
           >
-            <stop offset="0.333333" stopColor="#FBFBFB" />
-            <stop offset="1" stopColor="white" stopOpacity="0" />
+            <stop offset="0.333333" stopColor={gradientStart} />
+            <stop offset="1" stopColor={gradientEnd} stopOpacity="0" />
           </radialGradient>
           <radialGradient
             id="paint2_radial"
@@ -275,8 +281,8 @@ const HeroBgAnimation: React.FC = () => {
             gradientUnits="userSpaceOnUse"
             gradientTransform="translate(301 301) rotate(90) scale(300)"
           >
-            <stop offset="0.333333" stopColor="#FBFBFB" />
-            <stop offset="1" stopColor="white" stopOpacity="0" />
+            <stop offset="0.333333" stopColor={gradientStart} />
+            <stop offset="1" stopColor={gradientEnd} stopOpacity="0" />
           </radialGradient>
           <linearGradient
             id="paint3_linear"

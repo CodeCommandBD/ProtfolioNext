@@ -1,5 +1,5 @@
-import React from 'react';
-import { Div } from './HeroBgAnimationStyle';
+import React from "react";
+import { Div } from "./HeroBgAnimationStyle";
 const HeroBgAnimation = () => (
   <Div>
     <svg
@@ -233,8 +233,8 @@ const HeroBgAnimation = () => (
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(301 301) rotate(90) scale(300)"
         >
-          <stop offset="0.333333" stopColor="#FBFBFB" />
-          <stop offset="1" stopColor="white" stopOpacity="0" />
+          <stop offset="0.333333" stopColor="#000000" />
+          <stop offset="1" stopColor="#000000" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint1_radial"
@@ -244,8 +244,8 @@ const HeroBgAnimation = () => (
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(301 301) rotate(90) scale(300)"
         >
-          <stop offset="0.333333" stopColor="#FBFBFB" />
-          <stop offset="1" stopColor="white" stopOpacity="0" />
+          <stop offset="0.333333" stopColor="#000000" />
+          <stop offset="1" stopColor="#000000" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint2_radial"
@@ -255,8 +255,8 @@ const HeroBgAnimation = () => (
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(301 301) rotate(90) scale(300)"
         >
-          <stop offset="0.333333" stopColor="#FBFBFB" />
-          <stop offset="1" stopColor="white" stopOpacity="0" />
+          <stop offset="0.333333" stopColor="#000000" />
+          <stop offset="1" stopColor="#000000" stopOpacity="0" />
         </radialGradient>
         <linearGradient
           id="paint3_linear"
