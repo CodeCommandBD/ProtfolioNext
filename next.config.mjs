@@ -67,8 +67,32 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
+  compress: true, // Enable gzip compression
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: ["lucide-react", "framer-motion", "react-icons"],
+  },
+  poweredByHeader: false, // Remove X-Powered-By header
+  async headers() {
+    return [
+      {
+        source: "/:all*(svg|jpg|png|webp|avif|gif)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
   },
 };
 

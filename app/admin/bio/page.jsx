@@ -213,10 +213,10 @@ const bioSchema = z.object({
   resume: z.string().url('Must be a valid URL').optional().or(z.literal('')),
 });
 
-type BioFormData = z.infer<typeof bioSchema>;
+// Type removed for .jsx compatibility
 
 export default function BioManagementPage() {
-  const [roles, setRoles] = useState<string[]>(['']);
+  const [roles, setRoles] = useState(['']);
   const [profileImage, setProfileImage] = useState('');
   const [resumeUrl, setResumeUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);

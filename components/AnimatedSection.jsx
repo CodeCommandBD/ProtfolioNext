@@ -26,6 +26,7 @@ const fadeIn = keyframes`
 
 const AnimatedContainer = styled.div`
   opacity: 0;
+  will-change: opacity, transform;
 
   &.visible {
     animation: ${({ $animationType }) =>

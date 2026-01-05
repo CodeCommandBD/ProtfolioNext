@@ -6,12 +6,13 @@ import Education from "@/components/sections/Education";
 import Projects from "@/components/sections/Projects";
 import Contact from "@/components/sections/Contact";
 import Footer from "@/components/sections/Footer";
-import StarsCanvas from "@/components/canvas/Stars";
+import StarsCanvas from "@/components/canvas/StarsWrapper";
 import ClientWrapper, { Body, Wrapper } from "@/components/ClientWrapper";
 import ScrollProgress from "@/components/ScrollProgress";
 import AnimatedSection from "@/components/AnimatedSection";
 import ScrollToTop from "@/components/ScrollToTop";
 import PageLoader from "@/components/PageLoader";
+import StructuredData from "@/components/StructuredData";
 
 // Fetch data on server side
 async function getBioData() {
@@ -110,6 +111,7 @@ export default async function Home() {
         <ScrollProgress />
         <ScrollToTop />
         <Navbar bio={bio} />
+        <StructuredData bio={bio} />
         <Body>
           <StarsCanvas />
           <div>

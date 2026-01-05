@@ -117,12 +117,12 @@ const MobileMenu = styled.ul`
   position: absolute;
   top: 80px;
   right: 0;
-  transform: ${({ isOpen }) =>
-    isOpen ? "translateY(0)" : "translateY(-100%)"};
+  transform: ${({ $isOpen }) =>
+    $isOpen ? "translateY(0)" : "translateY(-100%)"};
   border-radius: 0 0 20px 20px;
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
-  opacity: ${({ isOpen }) => (isOpen ? "100%" : "0")};
-  z-index: ${({ isOpen }) => (isOpen ? "1000" : "-1000")};
+  opacity: ${({ $isOpen }) => ($isOpen ? "100%" : "0")};
+  z-index: ${({ $isOpen }) => ($isOpen ? "1000" : "-1000")};
   transition: 0.5s ease-in-out;
 `;
 
@@ -152,7 +152,7 @@ const Navbar = ({ bio }) => {
         </NavItems>
 
         {isOpen && (
-          <MobileMenu isOpen={isOpen}>
+          <MobileMenu $isOpen={isOpen}>
             <NavLink onClick={() => setIsOpen(!isOpen)} href="#About">
               About
             </NavLink>

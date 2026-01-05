@@ -185,11 +185,12 @@ const LoadingScreen = () => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    // Optimized timeline for better performance
     const timeline = [
-      { delay: 0, stage: "liftup", duration: 800 },
-      { delay: 800, stage: "warmup", duration: 1000 },
-      { delay: 1800, stage: "blastoff", duration: 600 },
-      { delay: 2400, stage: "exit", duration: 0 },
+      { delay: 0, stage: "liftup", duration: 600 }, // 0-0.6s
+      { delay: 600, stage: "warmup", duration: 700 }, // 0.6-1.3s
+      { delay: 1300, stage: "blastoff", duration: 500 }, // 1.3-1.8s
+      { delay: 1800, stage: "exit", duration: 0 }, // 1.8s
     ];
 
     timeline.forEach(({ delay, stage: newStage }) => {
@@ -202,7 +203,7 @@ const LoadingScreen = () => {
           clearInterval(progressInterval);
           return 100;
         }
-        return prev + 100 / 24;
+        return prev + 100 / 18; // Complete in ~1.8s
       });
     }, 100);
 
@@ -214,20 +215,20 @@ const LoadingScreen = () => {
       case "liftup":
         return {
           y: [100, 0],
-          transition: { duration: 0.8, ease: "easeOut" },
+          transition: { duration: 0.6, ease: "easeOut" },
         };
       case "warmup":
         return {
           y: 0,
           x: [-2, 2, -2, 2, 0],
           rotate: [-1, 1, -1, 1, 0],
-          transition: { duration: 0.5, repeat: 2 },
+          transition: { duration: 0.35, repeat: 2 },
         };
       case "blastoff":
         return {
           y: -1000,
           scale: 1.2,
-          transition: { duration: 0.6, ease: "easeIn" },
+          transition: { duration: 0.5, ease: "easeIn" },
         };
       default:
         return { y: 100 };

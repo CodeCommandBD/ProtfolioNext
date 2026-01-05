@@ -8,11 +8,11 @@ const PageLoader = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Wait for the complete rocket animation sequence
-    // Total animation time: 2.4s (animation) + 0.5s (fade out buffer)
+    // Optimized animation time for better performance
+    // Total: 0.8s (reduced from 2.0s for faster LCP)
     const animationTimer = setTimeout(() => {
       setIsLoading(false);
-    }, 2900); // 2.9 seconds to ensure rocket fully exits
+    }, 800);
 
     return () => clearTimeout(animationTimer);
   }, []);

@@ -204,10 +204,16 @@ const Hero = ({ bio }) => {
         <HeroBg>
           <HeroBgAnimation />
         </HeroBg>
-        <motion.div {...headContainerAnimation}>
+        <motion.div
+          {...headContainerAnimation}
+          style={{ willChange: "transform, opacity" }}
+        >
           <HeroInnerContainer>
             <HeroLeft>
-              <motion.div {...headTextAnimation}>
+              <motion.div
+                {...headTextAnimation}
+                style={{ willChange: "transform, opacity" }}
+              >
                 <Title>
                   Hi, I am <br /> {bio?.name || "Loading..."}
                 </Title>
@@ -229,7 +235,10 @@ const Hero = ({ bio }) => {
                 </TextLoop>
               </motion.div>
 
-              <motion.div {...headContentAnimation}>
+              <motion.div
+                {...headContentAnimation}
+                style={{ willChange: "transform, opacity" }}
+              >
                 <SubTitle>{bio?.description || ""}</SubTitle>
               </motion.div>
               {bio?.resume && (
@@ -239,7 +248,10 @@ const Hero = ({ bio }) => {
               )}
             </HeroLeft>
             <HeroRight>
-              <motion.div {...headContainerAnimation}>
+              <motion.div
+                {...headContainerAnimation}
+                style={{ willChange: "transform, opacity" }}
+              >
                 <Tilt>
                   <Img
                     src={bio?.profileImage || "/img2.png"}
