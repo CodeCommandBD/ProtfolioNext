@@ -72,7 +72,7 @@ const ContactTitle = styled.div`
   font-size: 28px;
   margin-bottom: 6px;
   font-weight: 600;
-  color: ${({ theme }) => theme.text_primary};
+  color: #ffffff;
 `;
 
 const ContactInput = styled.input`
@@ -81,11 +81,14 @@ const ContactInput = styled.input`
   border: 1px solid ${({ theme }) => theme.text_secondary + 50};
   outline: none;
   font-size: 18px;
-  color: ${({ theme }) => theme.text_primary};
+  color: #ffffff;
   border-radius: 12px;
   padding: 12px 16px;
   &:focus {
     border: 1px solid ${({ theme }) => theme.primary};
+  }
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
   }
 `;
 
@@ -95,11 +98,14 @@ const ContactInputMessage = styled.textarea`
   border: 1px solid ${({ theme }) => theme.text_secondary + 50};
   outline: none;
   font-size: 18px;
-  color: ${({ theme }) => theme.text_primary};
+  color: #ffffff;
   border-radius: 12px;
   padding: 12px 16px;
   &:focus {
     border: 1px solid ${({ theme }) => theme.primary};
+  }
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
   }
 `;
 
@@ -127,7 +133,7 @@ const ContactButton = styled.button`
   margin-top: 2px;
   border-radius: 12px;
   border: none;
-  color: ${({ theme }) => theme.text_primary};
+  color: #ffffff;
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;

@@ -100,3 +100,25 @@
 ::-webkit-backdrop-filter {
   blur: 3px saturate(106%);
 }
+
+/* Vertical Timeline Customization */
+.vertical-timeline::before {
+  background: #10B981 !important;
+}
+
+.vertical-timeline-element-date.timeline-date {
+  color: #10B981 !important;
+  font-weight: 600 !important;
+}
+
+/* Contact Form Text Color Fix */
+#Contact input,
+#Contact textarea {
+  color: #ffffff !important;
+}
+
+#Contact input::placeholder,
+#Contact textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+

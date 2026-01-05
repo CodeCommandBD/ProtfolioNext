@@ -8,6 +8,8 @@ import Contact from "@/components/sections/Contact";
 import Footer from "@/components/sections/Footer";
 import StarsCanvas from "@/components/canvas/Stars";
 import ClientWrapper, { Body, Wrapper } from "@/components/ClientWrapper";
+import ScrollProgress from "@/components/ScrollProgress";
+import AnimatedSection from "@/components/AnimatedSection";
 
 // Fetch data on server side
 async function getBioData() {
@@ -102,19 +104,30 @@ export default async function Home() {
 
   return (
     <ClientWrapper>
+      <ScrollProgress />
       <Navbar bio={bio} />
       <Body>
         <StarsCanvas />
         <div>
           <Hero bio={bio} />
           <Wrapper>
-            <Skills skills={skills} />
-            <Experience experiences={experiences} />
+            <AnimatedSection delay="0.1s">
+              <Skills skills={skills} />
+            </AnimatedSection>
+            <AnimatedSection delay="0.2s">
+              <Experience experiences={experiences} />
+            </AnimatedSection>
           </Wrapper>
-          <Projects projects={projects} />
+          <AnimatedSection delay="0.1s">
+            <Projects projects={projects} />
+          </AnimatedSection>
           <Wrapper>
-            <Education education={education} />
-            <Contact />
+            <AnimatedSection delay="0.1s">
+              <Education education={education} />
+            </AnimatedSection>
+            <AnimatedSection delay="0.2s">
+              <Contact />
+            </AnimatedSection>
           </Wrapper>
           <Footer bio={bio} />
         </div>

@@ -112,6 +112,13 @@ const ExperienceCard = ({ experience }) => {
       contentArrowStyle={{
         borderRight: "7px solid  rgba(255, 255, 255, 0.3)",
       }}
+      iconStyle={{
+        background: "#1d1836",
+        color: "#fff",
+        boxShadow:
+          "0 0 0 4px #10B981, inset 0 2px 0 rgba(0,0,0,.08), 0 3px 0 4px rgba(0,0,0,.05)",
+      }}
+      dateClassName="timeline-date"
       date={experience.date}
     >
       <Top>
