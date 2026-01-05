@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { VerticalTimelineElement } from "react-vertical-timeline-component";
 import styled from "styled-components";
 
 const Top = styled.div`
@@ -28,7 +27,7 @@ const Body = styled.div`
 const Role = styled.div`
   font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: ${({ theme }) => theme.white + 99};
   @media only screen and (max-width: 768px) {
     font-size: 14px;
   }
@@ -37,7 +36,7 @@ const Role = styled.div`
 const Company = styled.div`
   font-size: 14px;
   font-weight: 500;
-  color: #ffffff;
+  color: ${({ theme }) => theme.white + 80};
   @media only screen and (max-width: 768px) {
     font-size: 12px;
   }
@@ -46,7 +45,7 @@ const Company = styled.div`
 const Date = styled.div`
   font-size: 12px;
   font-weight: 400;
-  color: #ffffff;
+  color: ${({ theme }) => theme.white + 80};
   @media only screen and (max-width: 768px) {
     font-size: 10px;
   }
@@ -56,7 +55,7 @@ const Description = styled.div`
   width: 100%;
   font-size: 15px;
   font-weight: 400;
-  color: #ffffff;
+  color: ${({ theme }) => theme.white + 99};
   margin-bottom: 10px;
   @media only screen and (max-width: 768px) {
     font-size: 12px;
@@ -67,17 +66,7 @@ const Skills = styled.div`
   width: 100%;
   display: flex;
   gap: 12px;
-  margin-top: -10px;
-  flex-wrap: wrap;
-`;
-
-const Skill = styled.div`
-  font-size: 15px;
-  font-weight: 400;
-  color: #ffffff;
-  @media only screen and (max-width: 768px) {
-    font-size: 12px;
-  }
+  margin-top: 10px;
 `;
 
 const ItemWrapper = styled.div`
@@ -86,41 +75,25 @@ const ItemWrapper = styled.div`
   gap: 8px;
 `;
 
+const Skill = styled.div`
+  font-size: 15px;
+  font-weight: 400;
+  color: ${({ theme }) => theme.white + 99};
+  @media only screen and (max-width: 768px) {
+    font-size: 12px;
+  }
+`;
+
+const CardContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: transparent;
+`;
+
 const ExperienceCard = ({ experience }) => {
   return (
-    <VerticalTimelineElement
-      icon={
-        <img
-          width="100%"
-          height="100%"
-          alt={experience.company}
-          style={{ borderRadius: "50%", objectFit: "cover" }}
-          src={experience.img}
-        />
-      }
-      contentStyle={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-        background: "#1d1836",
-        color: "#fff",
-        boxShadow: "rgba(23, 92, 230, 0.15) 0px 4px 24px",
-        backgroundColor: "rgba(17, 25, 40, 0.83)",
-        border: "1px solid rgba(255, 255, 255, 0.125)",
-        borderRadius: "6px",
-      }}
-      contentArrowStyle={{
-        borderRight: "7px solid  rgba(255, 255, 255, 0.3)",
-      }}
-      iconStyle={{
-        background: "#1d1836",
-        color: "#fff",
-        boxShadow:
-          "0 0 0 4px #10B981, inset 0 2px 0 rgba(0,0,0,.08), 0 3px 0 4px rgba(0,0,0,.05)",
-      }}
-      dateClassName="timeline-date"
-      date={experience.date}
-    >
+    <CardContainer>
       <Top>
         <Image src={experience.img} />
         <Body>
@@ -129,9 +102,9 @@ const ExperienceCard = ({ experience }) => {
           <Date>{experience.date}</Date>
         </Body>
       </Top>
-      <Description>{experience.desc}</Description>
-      {experience.skills && (
-        <>
+      <Description>
+        {experience.desc}
+        {experience.skills && (
           <Skills>
             <b>Skills:</b>
             <ItemWrapper>
@@ -140,9 +113,9 @@ const ExperienceCard = ({ experience }) => {
               ))}
             </ItemWrapper>
           </Skills>
-        </>
-      )}
-    </VerticalTimelineElement>
+        )}
+      </Description>
+    </CardContainer>
   );
 };
 

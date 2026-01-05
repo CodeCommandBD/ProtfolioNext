@@ -10,6 +10,7 @@ import StarsCanvas from "@/components/canvas/Stars";
 import ClientWrapper, { Body, Wrapper } from "@/components/ClientWrapper";
 import ScrollProgress from "@/components/ScrollProgress";
 import AnimatedSection from "@/components/AnimatedSection";
+import ScrollToTop from "@/components/ScrollToTop";
 
 // Fetch data on server side
 async function getBioData() {
@@ -105,6 +106,7 @@ export default async function Home() {
   return (
     <ClientWrapper>
       <ScrollProgress />
+      <ScrollToTop />
       <Navbar bio={bio} />
       <Body>
         <StarsCanvas />

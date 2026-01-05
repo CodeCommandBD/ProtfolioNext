@@ -2,8 +2,7 @@
 
 import React from "react";
 import styled from "styled-components";
-import { VerticalTimeline } from "react-vertical-timeline-component";
-import "react-vertical-timeline-component/style.min.css";
+import AnimatedTimeline from "../AnimatedTimeline";
 import ExperienceCard from "../cards/ExperienceCard";
 
 const Container = styled.div`
@@ -64,14 +63,9 @@ const Experience = ({ experiences = [] }) => {
           My work experience as a software engineer and working on different
           companies and projects.
         </Desc>
-        <VerticalTimeline>
-          {experiences.map((experience, index) => (
-            <ExperienceCard
-              key={`experience-${index}`}
-              experience={experience}
-            />
-          ))}
-        </VerticalTimeline>
+        <AnimatedTimeline items={experiences}>
+          {(experience) => <ExperienceCard experience={experience} />}
+        </AnimatedTimeline>
       </Wrapper>
     </Container>
   );

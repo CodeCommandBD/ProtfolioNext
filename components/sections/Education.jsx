@@ -2,8 +2,7 @@
 
 import React from "react";
 import styled from "styled-components";
-import { VerticalTimeline } from "react-vertical-timeline-component";
-import "react-vertical-timeline-component/style.min.css";
+import AnimatedTimeline from "../AnimatedTimeline";
 import EducationCard from "../cards/EducationCard";
 import EarthCanvas from "../canvas/Earth";
 
@@ -65,11 +64,9 @@ const Education = ({ education = [] }) => {
           My education has been a journey of self-discovery and growth. My
           educational details are as follows.
         </Desc>
-        <VerticalTimeline>
-          {education.map((edu, index) => (
-            <EducationCard key={`education-${index}`} education={edu} />
-          ))}
-        </VerticalTimeline>
+        <AnimatedTimeline items={education}>
+          {(edu) => <EducationCard education={edu} />}
+        </AnimatedTimeline>
       </Wrapper>
       <EarthCanvas />
     </Container>

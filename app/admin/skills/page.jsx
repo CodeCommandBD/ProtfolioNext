@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import styled from 'styled-components';
-import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from 'react-icons/fi';
+import { useEffect, useState } from "react";
+import styled from "styled-components";
+import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from "react-icons/fi";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -22,7 +22,11 @@ const Title = styled.h1`
 `;
 
 const AddButton = styled.button`
-  background: linear-gradient(225deg, hsla(271, 100%, 50%, 1) 0%, hsla(294, 100%, 50%, 1) 100%);
+  background: linear-gradient(
+    225deg,
+    hsla(271, 100%, 50%, 1) 0%,
+    hsla(294, 100%, 50%, 1) 100%
+  );
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
@@ -71,21 +75,27 @@ const ActionButtons = styled.div`
   gap: 8px;
 `;
 
-const IconButton = styled.button<{ variant?: 'edit' | 'delete' }>`
+const IconButton = styled.button`
   background: ${({ variant }) =>
-    variant === 'delete' ? 'rgba(255, 107, 107, 0.1)' : 'rgba(133, 76, 230, 0.1)'};
+    variant === "delete"
+      ? "rgba(255, 107, 107, 0.1)"
+      : "rgba(133, 76, 230, 0.1)"};
   border: 1px solid
     ${({ variant }) =>
-      variant === 'delete' ? 'rgba(255, 107, 107, 0.3)' : 'rgba(133, 76, 230, 0.3)'};
+      variant === "delete"
+        ? "rgba(255, 107, 107, 0.3)"
+        : "rgba(133, 76, 230, 0.3)"};
   border-radius: 6px;
   padding: 8px;
-  color: ${({ variant }) => (variant === 'delete' ? '#ff6b6b' : '#854ce6')};
+  color: ${({ variant }) => (variant === "delete" ? "#ff6b6b" : "#854ce6")};
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
     background: ${({ variant }) =>
-      variant === 'delete' ? 'rgba(255, 107, 107, 0.2)' : 'rgba(133, 76, 230, 0.2)'};
+      variant === "delete"
+        ? "rgba(255, 107, 107, 0.2)"
+        : "rgba(133, 76, 230, 0.2)"};
   }
 
   svg {
@@ -111,14 +121,22 @@ const SkillItem = styled.div`
   color: #f2f3f4;
 `;
 
+const Percentage = styled.span`
+  color: ${({ theme }) => theme.text_secondary || "#b1b2b3"};
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+`;
+
 const SkillImage = styled.img`
   width: 20px;
   height: 20px;
   object-fit: contain;
 `;
 
-const Modal = styled.div<{ isOpen }>`
-  display: ${({ isOpen }) => (isOpen ? 'flex' : 'none')};
+const Modal = styled.div`
+  display: ${({ isOpen }) => (isOpen ? "flex" : "none")};
   position: fixed;
   top: 0;
   left: 0;
@@ -209,27 +227,37 @@ const SkillInputGroup = styled.div`
   align-items: end;
 `;
 
-const SmallButton = styled.button<{ variant?: 'add' | 'remove' }>`
+const SmallButton = styled.button`
   background: ${({ variant }) =>
-    variant === 'remove' ? 'rgba(255, 107, 107, 0.1)' : 'rgba(133, 76, 230, 0.1)'};
+    variant === "remove"
+      ? "rgba(255, 107, 107, 0.1)"
+      : "rgba(133, 76, 230, 0.1)"};
   border: 1px solid
     ${({ variant }) =>
-      variant === 'remove' ? 'rgba(255, 107, 107, 0.3)' : 'rgba(133, 76, 230, 0.3)'};
+      variant === "remove"
+        ? "rgba(255, 107, 107, 0.3)"
+        : "rgba(133, 76, 230, 0.3)"};
   border-radius: 6px;
   padding: 12px 16px;
-  color: ${({ variant }) => (variant === 'remove' ? '#ff6b6b' : '#854ce6')};
+  color: ${({ variant }) => (variant === "remove" ? "#ff6b6b" : "#854ce6")};
   font-size: 14px;
   cursor: pointer;
   white-space: nowrap;
 
   &:hover {
     background: ${({ variant }) =>
-      variant === 'remove' ? 'rgba(255, 107, 107, 0.2)' : 'rgba(133, 76, 230, 0.2)'};
+      variant === "remove"
+        ? "rgba(255, 107, 107, 0.2)"
+        : "rgba(133, 76, 230, 0.2)"};
   }
 `;
 
 const SubmitButton = styled.button`
-  background: linear-gradient(225deg, hsla(271, 100%, 50%, 1) 0%, hsla(294, 100%, 50%, 1) 100%);
+  background: linear-gradient(
+    225deg,
+    hsla(271, 100%, 50%, 1) 0%,
+    hsla(294, 100%, 50%, 1) 100%
+  );
   border: none;
   border-radius: 8px;
   padding: 14px 24px;
@@ -254,25 +282,13 @@ const SubmitButton = styled.button`
   }
 `;
 
-interface Skill {
-  name;
-  image;
-}
-
-interface SkillCategory {
-  _id?;
-  title;
-  skills: Skill[];
-  order;
-}
-
 export default function SkillsManagementPage() {
-  const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([]);
+  const [skillCategories, setSkillCategories] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<SkillCategory | null>(null);
+  const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({
-    title: '',
-    skills: [{ name: '', image: '' }],
+    title: "",
+    skills: [{ name: "", image: "", percentage: 50 }],
     order: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -283,23 +299,23 @@ export default function SkillsManagementPage() {
 
   const fetchSkills = async () => {
     try {
-      const response = await fetch('/api/skills');
+      const response = await fetch("/api/skills");
       const data = await response.json();
       setSkillCategories(data);
     } catch (error) {
-      console.error('Error fetching skills:', error);
+      console.error("Error fetching skills:", error);
     }
   };
 
-  const handleOpenModal = (category?: SkillCategory) => {
+  const handleOpenModal = (category) => {
     if (category) {
       setEditingCategory(category);
       setFormData(category);
     } else {
       setEditingCategory(null);
       setFormData({
-        title: '',
-        skills: [{ name: '', image: '' }],
+        title: "",
+        skills: [{ name: "", image: "", percentage: 50 }],
         order: skillCategories.length,
       });
     }
@@ -314,7 +330,7 @@ export default function SkillsManagementPage() {
   const handleAddSkill = () => {
     setFormData({
       ...formData,
-      skills: [...formData.skills, { name: '', image: '' }],
+      skills: [...formData.skills, { name: "", image: "", percentage: 50 }],
     });
   };
 
@@ -325,23 +341,25 @@ export default function SkillsManagementPage() {
     });
   };
 
-  const handleSkillChange = (index, field: 'name' | 'image', value) => {
+  const handleSkillChange = (index, field, value) => {
     const newSkills = [...formData.skills];
     newSkills[index][field] = value;
     setFormData({ ...formData, skills: newSkills });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const url = editingCategory ? `/api/skills/${editingCategory._id}` : '/api/skills';
-      const method = editingCategory ? 'PUT' : 'POST';
+      const url = editingCategory
+        ? `/api/skills/${editingCategory._id}`
+        : "/api/skills";
+      const method = editingCategory ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
@@ -349,61 +367,68 @@ export default function SkillsManagementPage() {
         await fetchSkills();
         handleCloseModal();
       } else {
-        alert('Failed to save skill category');
+        alert("Failed to save skill category");
       }
     } catch (error) {
-      console.error('Error saving skill category:', error);
-      alert('Failed to save skill category');
+      console.error("Error saving skill category:", error);
+      alert("Failed to save skill category");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this skill category?')) return;
+    if (!confirm("Are you sure you want to delete this skill category?"))
+      return;
 
     try {
-      const response = await fetch(`/api/skills/${id}`, { method: 'DELETE' });
+      const response = await fetch(`/api/skills/${id}`, { method: "DELETE" });
       if (response.ok) {
         await fetchSkills();
       } else {
-        alert('Failed to delete skill category');
+        alert("Failed to delete skill category");
       }
     } catch (error) {
-      console.error('Error deleting skill category:', error);
-      alert('Failed to delete skill category');
+      console.error("Error deleting skill category:", error);
+      alert("Failed to delete skill category");
     }
   };
 
   return (
-    
-      
-        Skills Management</Title>
+    <Container>
+      <Header>
+        <Title>Skills Management</Title>
         <AddButton onClick={() => handleOpenModal()}>
           <FiPlus />
           Add Skill Category
         </AddButton>
       </Header>
 
-      
+      <SkillsGrid>
         {skillCategories.map((category) => (
           <SkillCard key={category._id}>
-            
-              {category.title}</SkillTitle>
-              
+            <SkillHeader>
+              <SkillTitle>{category.title}</SkillTitle>
+              <ActionButtons>
                 <IconButton onClick={() => handleOpenModal(category)}>
                   <FiEdit2 />
                 </IconButton>
-                <IconButton variant="delete" onClick={() => handleDelete(category._id!)}>
+                <IconButton
+                  variant="delete"
+                  onClick={() => handleDelete(category._id)}
+                >
                   <FiTrash2 />
                 </IconButton>
               </ActionButtons>
             </SkillHeader>
-            
+            <SkillsList>
               {category.skills.map((skill, index) => (
                 <SkillItem key={index}>
                   <SkillImage src={skill.image} alt={skill.name} />
                   {skill.name}
+                  {skill.percentage && (
+                    <Percentage>{skill.percentage}%</Percentage>
+                  )}
                 </SkillItem>
               ))}
             </SkillsList>
@@ -412,34 +437,40 @@ export default function SkillsManagementPage() {
       </SkillsGrid>
 
       <Modal isOpen={isModalOpen}>
-        
-          
-            {editingCategory ? 'Edit' : 'Add'} Skill Category</ModalTitle>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>
+              {editingCategory ? "Edit" : "Add"} Skill Category
+            </ModalTitle>
             <CloseButton onClick={handleCloseModal}>
               <FiX />
             </CloseButton>
           </ModalHeader>
 
           <Form onSubmit={handleSubmit}>
-            
-              Category Title</Label>
+            <FormGroup>
+              <Label>Category Title</Label>
               <Input
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder="e.g., Frontend"
                 required
               />
             </FormGroup>
 
-            
-              Skills</Label>
+            <FormGroup>
+              <Label>Skills</Label>
               {formData.skills.map((skill, index) => (
-                <div key={index}>
-                  
+                <div key={index} style={{ marginBottom: "12px" }}>
+                  <SkillInputGroup>
                     <FormGroup style={{ flex: 1, margin: 0 }}>
                       <Input
                         value={skill.name}
-                        onChange={(e) => handleSkillChange(index, 'name', e.target.value)}
+                        onChange={(e) =>
+                          handleSkillChange(index, "name", e.target.value)
+                        }
                         placeholder="Skill name"
                         required
                       />
@@ -447,8 +478,28 @@ export default function SkillsManagementPage() {
                     <FormGroup style={{ flex: 1, margin: 0 }}>
                       <Input
                         value={skill.image}
-                        onChange={(e) => handleSkillChange(index, 'image', e.target.value)}
+                        onChange={(e) =>
+                          handleSkillChange(index, "image", e.target.value)
+                        }
                         placeholder="Image URL"
+                        required
+                      />
+                    </FormGroup>
+                    <FormGroup style={{ flex: 0.5, margin: 0 }}>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={skill.percentage || 50}
+                        onChange={(e) =>
+                          handleSkillChange(
+                            index,
+                            "percentage",
+                            parseInt(e.target.value)
+                          )
+                        }
+                        placeholder="%"
+                        title="Proficiency"
                         required
                       />
                     </FormGroup>
@@ -471,7 +522,7 @@ export default function SkillsManagementPage() {
 
             <SubmitButton type="submit" disabled={isLoading}>
               <FiSave />
-              {isLoading ? 'Saving...' : 'Save Category'}
+              {isLoading ? "Saving..." : "Save Category"}
             </SubmitButton>
           </Form>
         </ModalContent>
@@ -479,4 +530,3 @@ export default function SkillsManagementPage() {
     </Container>
   );
 }
-
