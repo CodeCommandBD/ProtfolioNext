@@ -185,7 +185,3 @@ sequenceDiagram
 - **Font Optimization:** Google Fonts loaded via `next/font` with `swap` strategy.
 
 ---
-
-## 📝 License
-
-This project is open-source and available under the [MIT License](LICENSE).
