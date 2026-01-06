@@ -1,39 +1,38 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/mongoose";
 import Project from "@/lib/db/models/Project";
+import { requireAuth } from "@/lib/apiAuth";
+import { validateRequest } from "@/lib/validation";
+import { projectSchema } from "@/lib/validation/projects";
+import { handleError } from "@/lib/errorHandler";
 
 // GET all projects
 export async function GET() {
   try {
     await dbConnect();
-
     const projects = await Project.find().sort({ order: 1 });
-
     return NextResponse.json(projects);
   } catch (error) {
-    console.error("Error fetching projects:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch projects" },
-      { status: 500 }
-    );
+    return handleError(error, "GET /api/projects");
   }
 }
 
 // POST create new project (protected route)
-export async function POST(request) {
-  try {
-    await dbConnect();
+const createProjectHandler = requireAuth(
+  validateRequest(projectSchema)(
+    async (request, context, session, validatedData) => {
+      try {
+        await dbConnect();
+        const project = await Project.create(validatedData);
+        return NextResponse.json(project, { status: 201 });
+      } catch (error) {
+        return handleError(error, "POST /api/projects");
+      }
+    }
+  )
+);
 
-    const data = await request.json();
-
-    const project = await Project.create(data);
-
-    return NextResponse.json(project, { status: 201 });
-  } catch (error) {
-    console.error("Error creating project:", error);
-    return NextResponse.json(
-      { error: "Failed to create project" },
-      { status: 500 }
-    );
-  }
+export async function POST(request, context) {
+  return createProjectHandler(request, context);
 }

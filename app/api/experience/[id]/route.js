@@ -1,12 +1,16 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/mongoose";
 import Experience from "@/lib/db/models/Experience";
+import { requireAuth } from "@/lib/apiAuth";
+import { validateRequest } from "@/lib/validation";
+import { experienceSchema } from "@/lib/validation/experience";
+import { handleError } from "@/lib/errorHandler";
 
 // GET single experience
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-
     const { id } = params;
     const experience = await Experience.findById(id);
 
@@ -19,50 +23,52 @@ export async function GET(request, { params }) {
 
     return NextResponse.json(experience);
   } catch (error) {
-    console.error("Error fetching experience:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch experience" },
-      { status: 500 }
-    );
+    return handleError(error, "GET /api/experience/[id]");
   }
 }
 
 // PUT update experience (protected route)
-export async function PUT(request, { params }) {
-  try {
-    await dbConnect();
+const updateExperienceHandler = requireAuth(
+  validateRequest(experienceSchema)(
+    async (request, context, session, validatedData) => {
+      try {
+        await dbConnect();
+        const { id } = context.params;
 
-    const { id } = params;
-    const data = await request.json();
+        const experience = await Experience.findByIdAndUpdate(
+          id,
+          validatedData,
+          {
+            new: true,
+            runValidators: true,
+          }
+        );
 
-    const experience = await Experience.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true,
-    });
+        if (!experience) {
+          return NextResponse.json(
+            { error: "Experience not found" },
+            { status: 404 }
+          );
+        }
 
-    if (!experience) {
-      return NextResponse.json(
-        { error: "Experience not found" },
-        { status: 404 }
-      );
+        return NextResponse.json(experience);
+      } catch (error) {
+        return handleError(error, "PUT /api/experience/[id]");
+      }
     }
+  )
+);
 
-    return NextResponse.json(experience);
-  } catch (error) {
-    console.error("Error updating experience:", error);
-    return NextResponse.json(
-      { error: "Failed to update experience" },
-      { status: 500 }
-    );
-  }
+export async function PUT(request, context) {
+  return updateExperienceHandler(request, context);
 }
 
 // DELETE experience (protected route)
-export async function DELETE(request, { params }) {
+const deleteExperienceHandler = requireAuth(async (request, context) => {
   try {
     await dbConnect();
+    const { id } = context.params;
 
-    const { id } = params;
     const experience = await Experience.findByIdAndDelete(id);
 
     if (!experience) {
@@ -74,10 +80,10 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({ message: "Experience deleted successfully" });
   } catch (error) {
-    console.error("Error deleting experience:", error);
-    return NextResponse.json(
-      { error: "Failed to delete experience" },
-      { status: 500 }
-    );
+    return handleError(error, "DELETE /api/experience/[id]");
   }
+});
+
+export async function DELETE(request, context) {
+  return deleteExperienceHandler(request, context);
 }

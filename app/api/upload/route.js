@@ -1,8 +1,11 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { requireAuth } from "@/lib/apiAuth";
+import { handleError } from "@/lib/errorHandler";
 
 // POST upload image to Cloudinary (protected route)
-export async function POST(request) {
+const uploadHandler = requireAuth(async (request) => {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
@@ -29,10 +32,10 @@ export async function POST(request) {
       publicId: result.publicId,
     });
   } catch (error) {
-    console.error("Upload error:", error);
-    return NextResponse.json(
-      { error: "Failed to upload image" },
-      { status: 500 }
-    );
+    return handleError(error, "POST /api/upload");
   }
+});
+
+export async function POST(request, context) {
+  return uploadHandler(request, context);
 }

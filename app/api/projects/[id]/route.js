@@ -1,12 +1,16 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/mongoose";
 import Project from "@/lib/db/models/Project";
+import { requireAuth } from "@/lib/apiAuth";
+import { validateRequest } from "@/lib/validation";
+import { projectSchema } from "@/lib/validation/projects";
+import { handleError } from "@/lib/errorHandler";
 
 // GET single project
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-
     const { id } = params;
     const project = await Project.findById(id);
 
@@ -16,47 +20,48 @@ export async function GET(request, { params }) {
 
     return NextResponse.json(project);
   } catch (error) {
-    console.error("Error fetching project:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch project" },
-      { status: 500 }
-    );
+    return handleError(error, "GET /api/projects/[id]");
   }
 }
 
 // PUT update project (protected route)
-export async function PUT(request, { params }) {
-  try {
-    await dbConnect();
+const updateProjectHandler = requireAuth(
+  validateRequest(projectSchema)(
+    async (request, context, session, validatedData) => {
+      try {
+        await dbConnect();
+        const { id } = context.params;
 
-    const { id } = params;
-    const data = await request.json();
+        const project = await Project.findByIdAndUpdate(id, validatedData, {
+          new: true,
+          runValidators: true,
+        });
 
-    const project = await Project.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true,
-    });
+        if (!project) {
+          return NextResponse.json(
+            { error: "Project not found" },
+            { status: 404 }
+          );
+        }
 
-    if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+        return NextResponse.json(project);
+      } catch (error) {
+        return handleError(error, "PUT /api/projects/[id]");
+      }
     }
+  )
+);
 
-    return NextResponse.json(project);
-  } catch (error) {
-    console.error("Error updating project:", error);
-    return NextResponse.json(
-      { error: "Failed to update project" },
-      { status: 500 }
-    );
-  }
+export async function PUT(request, context) {
+  return updateProjectHandler(request, context);
 }
 
 // DELETE project (protected route)
-export async function DELETE(request, { params }) {
+const deleteProjectHandler = requireAuth(async (request, context) => {
   try {
     await dbConnect();
+    const { id } = context.params;
 
-    const { id } = params;
     const project = await Project.findByIdAndDelete(id);
 
     if (!project) {
@@ -65,10 +70,10 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({ message: "Project deleted successfully" });
   } catch (error) {
-    console.error("Error deleting project:", error);
-    return NextResponse.json(
-      { error: "Failed to delete project" },
-      { status: 500 }
-    );
+    return handleError(error, "DELETE /api/projects/[id]");
   }
+});
+
+export async function DELETE(request, context) {
+  return deleteProjectHandler(request, context);
 }

@@ -1,39 +1,38 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/mongoose";
 import Experience from "@/lib/db/models/Experience";
+import { requireAuth } from "@/lib/apiAuth";
+import { validateRequest } from "@/lib/validation";
+import { experienceSchema } from "@/lib/validation/experience";
+import { handleError } from "@/lib/errorHandler";
 
 // GET all experiences
 export async function GET() {
   try {
     await dbConnect();
-
     const experiences = await Experience.find().sort({ order: 1 });
-
     return NextResponse.json(experiences);
   } catch (error) {
-    console.error("Error fetching experiences:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch experiences" },
-      { status: 500 }
-    );
+    return handleError(error, "GET /api/experience");
   }
 }
 
 // POST create new experience (protected route)
-export async function POST(request) {
-  try {
-    await dbConnect();
+const createExperienceHandler = requireAuth(
+  validateRequest(experienceSchema)(
+    async (request, context, session, validatedData) => {
+      try {
+        await dbConnect();
+        const experience = await Experience.create(validatedData);
+        return NextResponse.json(experience, { status: 201 });
+      } catch (error) {
+        return handleError(error, "POST /api/experience");
+      }
+    }
+  )
+);
 
-    const data = await request.json();
-
-    const experience = await Experience.create(data);
-
-    return NextResponse.json(experience, { status: 201 });
-  } catch (error) {
-    console.error("Error creating experience:", error);
-    return NextResponse.json(
-      { error: "Failed to create experience" },
-      { status: 500 }
-    );
-  }
+export async function POST(request, context) {
+  return createExperienceHandler(request, context);
 }

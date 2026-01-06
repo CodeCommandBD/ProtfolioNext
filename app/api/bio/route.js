@@ -1,6 +1,11 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/mongoose";
 import Bio from "@/lib/db/models/Bio";
+import { requireAuth } from "@/lib/apiAuth";
+import { validateRequest } from "@/lib/validation";
+import { bioSchema } from "@/lib/validation/bio";
+import { handleError } from "@/lib/errorHandler";
 
 // GET bio data
 export async function GET() {
@@ -27,41 +32,39 @@ export async function GET() {
 
     return NextResponse.json(bio);
   } catch (error) {
-    console.error("Error fetching bio:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch bio data" },
-      { status: 500 }
-    );
+    return handleError(error, "GET /api/bio");
   }
 }
 
-// PUT update bio data (protected route - will add auth later)
-export async function PUT(request) {
-  try {
-    await dbConnect();
+// PUT update bio data (protected route)
+const updateBioHandler = requireAuth(
+  validateRequest(bioSchema)(
+    async (request, context, session, validatedData) => {
+      try {
+        await dbConnect();
 
-    const data = await request.json();
+        // Find existing bio or create new one
+        let bio = await Bio.findOne();
 
-    // Find existing bio or create new one
-    let bio = await Bio.findOne();
+        if (bio) {
+          // Update existing
+          bio = await Bio.findByIdAndUpdate(bio._id, validatedData, {
+            new: true,
+            runValidators: true,
+          });
+        } else {
+          // Create new
+          bio = await Bio.create(validatedData);
+        }
 
-    if (bio) {
-      // Update existing
-      bio = await Bio.findByIdAndUpdate(bio._id, data, {
-        new: true,
-        runValidators: true,
-      });
-    } else {
-      // Create new
-      bio = await Bio.create(data);
+        return NextResponse.json(bio);
+      } catch (error) {
+        return handleError(error, "PUT /api/bio");
+      }
     }
+  )
+);
 
-    return NextResponse.json(bio);
-  } catch (error) {
-    console.error("Error updating bio:", error);
-    return NextResponse.json(
-      { error: "Failed to update bio data" },
-      { status: 500 }
-    );
-  }
+export async function PUT(request, context) {
+  return updateBioHandler(request, context);
 }
