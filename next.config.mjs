@@ -69,12 +69,12 @@ const nextConfig = {
   },
   compress: true, // Enable gzip compression
   skipTrailingSlashRedirect: true,
+  serverExternalPackages: ["mongoose", "bcryptjs"],
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion", "react-icons"],
     serverActions: {
       bodySizeLimit: "2mb",
     },
-    serverComponentsExternalPackages: ["mongoose", "bcryptjs"],
   },
   poweredByHeader: false, // Remove X-Powered-By header
   generateBuildId: async () => {
