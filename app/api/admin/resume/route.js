@@ -52,7 +52,7 @@ export async function POST(request) {
     const buffer = await file.arrayBuffer();
     const bytes = Buffer.from(buffer);
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       cloudinary.uploader
         .upload_stream(
           {
@@ -80,7 +80,7 @@ export async function POST(request) {
         )
         .end(bytes);
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -88,7 +88,7 @@ export async function POST(request) {
   }
 }
 
-export async function DELETE(request) {
+export async function DELETE() {
   try {
     configureCloudinary();
 
@@ -107,7 +107,7 @@ export async function DELETE(request) {
     }
 
     return NextResponse.json({ message: "Resume deleted" });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

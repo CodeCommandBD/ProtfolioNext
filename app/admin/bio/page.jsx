@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,11 +36,7 @@ export default function BioManagementPage() {
     resolver: zodResolver(bioSchema),
   });
 
-  useEffect(() => {
-    fetchBio();
-  }, []);
-
-  const fetchBio = async () => {
+  const fetchBio = useCallback(async () => {
     try {
       const response = await fetch("/api/bio");
       const data = await response.json();
@@ -53,7 +49,11 @@ export default function BioManagementPage() {
     } catch (error) {
       console.error("Error fetching bio:", error);
     }
-  };
+  }, [reset]);
+
+  useEffect(() => {
+    fetchBio();
+  }, [fetchBio]);
 
   const handleAddRole = () => {
     if (roleInput.trim() && !currentRoles.includes(roleInput.trim())) {
