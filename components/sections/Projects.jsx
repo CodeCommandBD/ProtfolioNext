@@ -111,21 +111,21 @@ const Projects = ({ projects = [] }) => {
             $active={toggle === "all"}
             onClick={() => setToggle("all")}
           >
-            ALL
+            All
           </ToggleButton>
           <Divider />
           <ToggleButton
-            $active={toggle === "web app"}
-            onClick={() => setToggle("web app")}
+            $active={toggle === "static"}
+            onClick={() => setToggle("static")}
           >
-            WEB APP'S
+            Static / Interactive
           </ToggleButton>
           <Divider />
           <ToggleButton
-            $active={toggle === "live web app"}
-            onClick={() => setToggle("live web app")}
+            $active={toggle === "live"}
+            onClick={() => setToggle("live")}
           >
-            LIVE WEB APP'S
+            Live Demo
           </ToggleButton>
         </ToggleButtonGroup>
         <CardContainer>

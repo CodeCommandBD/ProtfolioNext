@@ -23,46 +23,36 @@ const menuItems = [
   { href: "/admin/projects", icon: FiFolder, label: "Projects" },
 ];
 
-export default function AdminSidebar() {
-  const [isOpen, setIsOpen] = useState(false);
+export default function AdminSidebar({ isOpen, setIsOpen }) {
   const pathname = usePathname();
 
   return (
     <>
-      {/* Mobile Toggle */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-[1001] bg-purple-600 border-none rounded-lg p-3 text-white cursor-pointer md:hidden"
-      >
-        {isOpen ? (
-          <FiX className="text-2xl" />
-        ) : (
-          <FiMenu className="text-2xl" />
-        )}
-      </button>
-
-      {/* Overlay */}
+      {/* Mobile Overlay */}
       {isOpen && (
         <div
           onClick={() => setIsOpen(false)}
-          className="fixed inset-0 bg-black/50 z-[999] md:hidden"
+          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Desktop: always visible, Mobile: slide in */}
       <aside
-        className={`w-[260px] bg-[#0f0f14] border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out
-          md:fixed md:top-0 md:left-0 md:h-screen md:z-[1000]
-          ${isOpen ? "md:translate-x-0" : "md:-translate-x-full"}
+        className={`
+          fixed top-0 left-0 h-screen w-64 bg-[#0f0f14] border-r border-white/10 
+          flex flex-col shadow-2xl transition-transform duration-300 ease-in-out z-50
+          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
         {/* Logo */}
-        <div className="p-6 text-2xl font-bold text-purple-600 border-b border-white/10">
-          Admin Panel
+        <div className="p-6 border-b border-white/10">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Admin Panel
+          </h1>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-4">
+        <nav className="flex-1 py-4 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -72,7 +62,7 @@ export default function AdminSidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 px-6 py-3 transition-all duration-200 border-l-[3px]
+                className={`flex items-center gap-3 px-6 py-3 transition-all duration-200 border-l-[3px] group
                   ${
                     isActive
                       ? "text-purple-600 bg-purple-600/10 border-l-purple-600"
@@ -80,12 +70,19 @@ export default function AdminSidebar() {
                   }
                 `}
               >
-                <Icon className="text-xl" />
-                <span>{item.label}</span>
+                <Icon className="text-xl transition-transform group-hover:scale-110" />
+                <span className="font-medium">{item.label}</span>
               </Link>
             );
           })}
         </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-white/10">
+          <div className="text-xs text-gray-500 text-center">
+            Portfolio Admin v1.0
+          </div>
+        </div>
       </aside>
     </>
   );

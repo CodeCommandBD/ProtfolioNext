@@ -2,6 +2,7 @@
 
 import React from "react";
 import styled from "styled-components";
+import Image from "next/image";
 
 const Card = styled.div`
   width: 100%;
@@ -22,12 +23,17 @@ const Card = styled.div`
   }
 `;
 
-const Image = styled.img`
+const ImageContainer = styled.div`
   width: 100%;
   height: 180px;
+  position: relative;
   background-color: ${({ theme }) => theme.white};
   border-radius: 10px;
   box-shadow: 0 0 16px 2px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+`;
+
+const StyledImage = styled(Image)`
   object-fit: cover;
 `;
 
@@ -121,7 +127,15 @@ const Button = styled.a`
 const ProjectCard = ({ project }) => {
   return (
     <Card>
-      <Image src={project.image} alt={project.title} />
+      <ImageContainer>
+        <StyledImage
+          src={project.image}
+          alt={project.title}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority={false}
+        />
+      </ImageContainer>
       <Tags>
         {project.tags?.map((tag, index) => (
           <Tag key={index}>{tag}</Tag>

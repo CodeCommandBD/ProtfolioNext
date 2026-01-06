@@ -330,21 +330,69 @@ export default function ProjectsManagementPage() {
                 )}
               </div>
 
+              <label className="text-sm font-medium text-gray-100">
+                Category
+              </label>
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-100">
-                  Category
-                </label>
-                <input
-                  {...register("category")}
-                  placeholder="e.g., Web App"
-                  className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
-                />
-                {errors.category && (
-                  <span className="text-red-500 text-sm">
-                    {errors.category.message}
-                  </span>
-                )}
+                <div className="relative">
+                  <input
+                    {...register("category")}
+                    placeholder="Type custom or select from below"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
+                  />
+                </div>
+
+                {/* Quick Select Buttons */}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setValue("category", "static", { shouldValidate: true })
+                    }
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                      projects.find((p) => p.category === "static")
+                        ? "bg-purple-600/20 border-purple-600 text-purple-400"
+                        : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
+                    }`}
+                  >
+                    Static / Interactive
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setValue("category", "live", { shouldValidate: true })
+                    }
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                      projects.find((p) => p.category === "live")
+                        ? "bg-purple-600/20 border-purple-600 text-purple-400"
+                        : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
+                    }`}
+                  >
+                    Live Demo
+                  </button>
+
+                  {/* Dynamic Categories from existing projects */}
+                  {[...new Set(projects.map((p) => p.category))]
+                    .filter((c) => c !== "static" && c !== "live" && c)
+                    .map((cat, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() =>
+                          setValue("category", cat, { shouldValidate: true })
+                        }
+                        className="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:bg-purple-600/20 hover:border-purple-600 hover:text-purple-400 transition-all"
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                </div>
               </div>
+              {errors.category && (
+                <span className="text-red-500 text-sm">
+                  {errors.category.message}
+                </span>
+              )}
 
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-gray-100">

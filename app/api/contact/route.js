@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendContactEmail } from "@/lib/nodemailer";
 import { z } from "zod";
+import { rateLimit } from "@/lib/limiter";
 
 // Validation schema
 const contactSchema = z.object({
@@ -13,6 +14,15 @@ const contactSchema = z.object({
 // POST send contact email
 export async function POST(request) {
   try {
+    // 1. Check Rate Limit (10 requests per minute per IP)
+    const isAllowed = rateLimit(request, 10, 60 * 1000);
+    if (!isAllowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
 
     // Validate input

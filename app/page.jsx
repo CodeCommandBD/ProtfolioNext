@@ -20,7 +20,7 @@ async function getBioData() {
     const res = await fetch(
       `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/bio`,
       {
-        cache: "no-store", // Always fetch fresh data
+        next: { revalidate: 60 }, // Cache for 1 minute
       }
     );
     if (!res.ok) return null;
@@ -36,7 +36,7 @@ async function getSkillsData() {
     const res = await fetch(
       `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/skills`,
       {
-        cache: "no-store",
+        next: { revalidate: 60 },
       }
     );
     if (!res.ok) return [];
@@ -52,7 +52,7 @@ async function getExperienceData() {
     const res = await fetch(
       `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/experience`,
       {
-        cache: "no-store",
+        next: { revalidate: 60 },
       }
     );
     if (!res.ok) return [];
@@ -68,7 +68,7 @@ async function getEducationData() {
     const res = await fetch(
       `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/education`,
       {
-        cache: "no-store",
+        next: { revalidate: 60 },
       }
     );
     if (!res.ok) return [];
@@ -84,7 +84,7 @@ async function getProjectsData() {
     const res = await fetch(
       `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/projects`,
       {
-        cache: "no-store",
+        next: { revalidate: 60 },
       }
     );
     if (!res.ok) return [];
