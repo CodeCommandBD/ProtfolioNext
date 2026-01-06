@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import { SessionProvider } from 'next-auth/react';
-import { ReactNode } from 'react';
-import AdminSidebar from '@/components/admin/AdminSidebar';
-import AdminHeader from '@/components/admin/AdminHeader';
-import styled from 'styled-components';
+import { SessionProvider } from "next-auth/react";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminHeader from "@/components/admin/AdminHeader";
+import styled from "styled-components";
 
 const AdminContainer = styled.div`
   display: flex;
@@ -28,17 +27,16 @@ const ContentArea = styled.div`
   }
 `;
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default function AdminLayout({ children }) {
   return (
-    
-      
+    <SessionProvider>
+      <AdminContainer>
         <AdminSidebar />
-        
+        <MainContent>
           <AdminHeader />
-          {children}</ContentArea>
+          <ContentArea>{children}</ContentArea>
         </MainContent>
       </AdminContainer>
     </SessionProvider>
   );
 }
-

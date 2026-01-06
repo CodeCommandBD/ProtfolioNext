@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import styled from 'styled-components';
-import { FiUser, FiAward, FiBriefcase, FiBook, FiFolder } from 'react-icons/fi';
+import { useEffect, useState } from "react";
+import styled from "styled-components";
+import { FiUser, FiAward, FiBriefcase, FiBook, FiFolder } from "react-icons/fi";
 
 const Container = styled.div`
   max-width: 1400px;
@@ -44,7 +44,10 @@ const StatCard = styled.div`
   }
 `;
 
-const StatIcon = styled.div<{ color }>`
+const StatIcon =
+  styled.div <
+  { color } >
+  `
   width: 56px;
   height: 56px;
   border-radius: 12px;
@@ -124,10 +127,10 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         const [skills, experience, education, projects] = await Promise.all([
-          fetch('/api/skills').then((r) => r.json()),
-          fetch('/api/experience').then((r) => r.json()),
-          fetch('/api/education').then((r) => r.json()),
-          fetch('/api/projects').then((r) => r.json()),
+          fetch("/api/skills").then((r) => r.json()),
+          fetch("/api/experience").then((r) => r.json()),
+          fetch("/api/education").then((r) => r.json()),
+          fetch("/api/projects").then((r) => r.json()),
         ]);
 
         setStats({
@@ -137,7 +140,7 @@ export default function AdminDashboard() {
           projects: projects.length || 0,
         });
       } catch (error) {
-        console.error('Error fetching stats:', error);
+        console.error("Error fetching stats:", error);
       }
     };
 
@@ -145,55 +148,55 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    
-      Dashboard</Title>
-      Welcome back! Here's an overview of your portfolio.</Subtitle>
+    <Container>
+      <Title>Dashboard</Title>
+      <Subtitle>Welcome back! Here's an overview of your portfolio.</Subtitle>
 
-      
-        
+      <StatsGrid>
+        <StatCard>
           <StatIcon color="#854ce6">
             <FiAward />
           </StatIcon>
-          
-            Skill Categories</StatLabel>
-            {stats.skills}</StatValue>
+          <StatInfo>
+            <StatLabel>Skill Categories</StatLabel>
+            <StatValue>{stats.skills}</StatValue>
           </StatInfo>
         </StatCard>
 
-        
+        <StatCard>
           <StatIcon color="#3b82f6">
             <FiBriefcase />
           </StatIcon>
-          
-            Work Experience</StatLabel>
-            {stats.experience}</StatValue>
+          <StatInfo>
+            <StatLabel>Work Experience</StatLabel>
+            <StatValue>{stats.experience}</StatValue>
           </StatInfo>
         </StatCard>
 
-        
+        <StatCard>
           <StatIcon color="#10b981">
             <FiBook />
           </StatIcon>
-          
-            Education</StatLabel>
-            {stats.education}</StatValue>
+          <StatInfo>
+            <StatLabel>Education</StatLabel>
+            <StatValue>{stats.education}</StatValue>
           </StatInfo>
         </StatCard>
 
-        
+        <StatCard>
           <StatIcon color="#f59e0b">
             <FiFolder />
           </StatIcon>
-          
-            Projects</StatLabel>
-            {stats.projects}</StatValue>
+          <StatInfo>
+            <StatLabel>Projects</StatLabel>
+            <StatValue>{stats.projects}</StatValue>
           </StatInfo>
         </StatCard>
       </StatsGrid>
 
-      
-        Quick Actions</SectionTitle>
-        
+      <QuickActions>
+        <SectionTitle>Quick Actions</SectionTitle>
+        <ActionGrid>
           <ActionButton href="/admin/bio">Manage Profile</ActionButton>
           <ActionButton href="/admin/skills">Add Skills</ActionButton>
           <ActionButton href="/admin/experience">Add Experience</ActionButton>
@@ -207,4 +210,3 @@ export default function AdminDashboard() {
     </Container>
   );
 }
-

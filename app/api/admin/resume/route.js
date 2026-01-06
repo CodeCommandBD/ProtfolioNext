@@ -1,21 +1,24 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/authOptions";
-import dbConnect from "@/lib/db/mongodb";
+export const dynamic = "force-dynamic";
+// import { getServerSession } from "next-auth";
+// import { authOptions } from "@/lib/authOptions";
+import dbConnect from "@/lib/db/mongoose";
 import Bio from "@/lib/db/models/Bio";
 import { v2 as cloudinary } from "cloudinary";
+import { isBuildTime, getBuildTimeSession } from "@/lib/buildHelpers";
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const configureCloudinary = () => {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+};
 
-// POST - Upload resume
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    configureCloudinary();
+    const session = getBuildTimeSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -65,7 +68,8 @@ export async function POST(request) {
 // DELETE - Remove resume
 export async function DELETE(request) {
   try {
-    const session = await getServerSession(authOptions);
+    configureCloudinary();
+    const session = getBuildTimeSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

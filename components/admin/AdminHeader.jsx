@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { signOut, useSession } from 'next-auth/react';
-import styled from 'styled-components';
-import { FiLogOut, FiUser } from 'react-icons/fi';
+import { signOut, useSession } from "next-auth/react";
+import styled from "styled-components";
+import { FiLogOut, FiUser } from "react-icons/fi";
 
 const Header = styled.header`
   background: #0f0f14;
@@ -82,7 +82,7 @@ const LogoutButton = styled.button`
 
   @media (max-width: 480px) {
     padding: 10px;
-    
+
     span {
       display: none;
     }
@@ -93,26 +93,25 @@ export default function AdminHeader() {
   const { data: session } = useSession();
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/admin/login' });
+    await signOut({ callbackUrl: "/admin/login" });
   };
 
   return (
-    
-      
-        
+    <Header>
+      <UserInfo>
+        <UserIcon>
           <FiUser />
         </UserIcon>
-        
-          {session?.user?.name || 'Admin'}</UserName>
-          {session?.user?.email || 'admin@example.com'}</UserEmail>
+        <UserDetails>
+          <UserName>{session?.user?.name || "Admin"}</UserName>
+          <UserEmail>{session?.user?.email || "admin@example.com"}</UserEmail>
         </UserDetails>
       </UserInfo>
 
       <LogoutButton onClick={handleLogout}>
         <FiLogOut />
-        Logout</span>
+        <span>Logout</span>
       </LogoutButton>
     </Header>
   );
 }
-

@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { signIn } from 'next-auth/react';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import styled from 'styled-components';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { signIn } from "next-auth/react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import styled from "styled-components";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 const Container = styled.div`
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #090917 0%, #1C1E27 100%);
+  background: linear-gradient(135deg, #090917 0%, #1c1e27 100%);
   padding: 20px;
 `;
 
@@ -86,7 +86,11 @@ const ErrorMessage = styled.span`
 `;
 
 const Button = styled.button`
-  background: linear-gradient(225deg, hsla(271, 100%, 50%, 1) 0%, hsla(294, 100%, 50%, 1) 100%);
+  background: linear-gradient(
+    225deg,
+    hsla(271, 100%, 50%, 1) 0%,
+    hsla(294, 100%, 50%, 1) 100%
+  );
   border: none;
   border-radius: 8px;
   padding: 14px 24px;
@@ -120,16 +124,14 @@ const AlertError = styled.div`
 `;
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
-
-type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const {
     register,
@@ -139,12 +141,12 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data) => {
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
@@ -153,53 +155,56 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error);
       } else if (result?.ok) {
-        router.push('/admin');
+        router.push("/admin");
         router.refresh();
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    
-      
-        Admin Login</Title>
-        Sign in to manage your portfolio</Subtitle>
+    <Container>
+      <LoginCard>
+        <Title>Admin Login</Title>
+        <Subtitle>Sign in to manage your portfolio</Subtitle>
 
-        {error && {error}</AlertError>}
+        {error && <AlertError>{error}</AlertError>}
 
         <Form onSubmit={handleSubmit(onSubmit)}>
-          
+          <FormGroup>
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               placeholder="admin@example.com"
-              {...register('email')}
+              {...register("email")}
             />
-            {errors.email && {errors.email.message}</ErrorMessage>}
+            {errors.email && (
+              <ErrorMessage>{errors.email.message}</ErrorMessage>
+            )}
           </FormGroup>
 
-          
+          <FormGroup>
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
               placeholder="••••••••"
-              {...register('password')}
+              {...register("password")}
             />
-            {errors.password && {errors.password.message}</ErrorMessage>}
+            {errors.password && (
+              <ErrorMessage>{errors.password.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? "Signing in..." : "Sign In"}
           </Button>
         </Form>
       </LoginCard>
     </Container>
   );
 }
-

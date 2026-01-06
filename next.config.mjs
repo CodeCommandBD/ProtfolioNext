@@ -68,10 +68,28 @@ const nextConfig = {
     styledComponents: true,
   },
   compress: true, // Enable gzip compression
+  skipTrailingSlashRedirect: true,
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion", "react-icons"],
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
+    serverComponentsExternalPackages: ["mongoose", "bcryptjs"],
   },
   poweredByHeader: false, // Remove X-Powered-By header
+  generateBuildId: async () => {
+    return "build-" + Date.now();
+  },
+  async redirects() {
+    return [];
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   async headers() {
     return [
       {

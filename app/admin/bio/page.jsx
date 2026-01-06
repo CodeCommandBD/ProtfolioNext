@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import styled from 'styled-components';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { FiUpload, FiSave } from 'react-icons/fi';
+import { useEffect, useState } from "react";
+import styled from "styled-components";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { FiUpload, FiSave } from "react-icons/fi";
 
 const Container = styled.div`
   max-width: 900px;
@@ -161,7 +161,11 @@ const ImagePreview = styled.img`
 `;
 
 const SubmitButton = styled.button`
-  background: linear-gradient(225deg, hsla(271, 100%, 50%, 1) 0%, hsla(294, 100%, 50%, 1) 100%);
+  background: linear-gradient(
+    225deg,
+    hsla(271, 100%, 50%, 1) 0%,
+    hsla(294, 100%, 50%, 1) 100%
+  );
   border: none;
   border-radius: 8px;
   padding: 14px 24px;
@@ -203,22 +207,22 @@ const SuccessMessage = styled.div`
 `;
 
 const bioSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  github: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  linkedin: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  twitter: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  insta: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  facebook: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  resume: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  github: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  linkedin: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  twitter: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  insta: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  facebook: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  resume: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
 // Type removed for .jsx compatibility
 
 export default function BioManagementPage() {
-  const [roles, setRoles] = useState(['']);
-  const [profileImage, setProfileImage] = useState('');
-  const [resumeUrl, setResumeUrl] = useState('');
+  const [roles, setRoles] = useState([""]);
+  const [profileImage, setProfileImage] = useState("");
+  const [resumeUrl, setResumeUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
@@ -236,35 +240,35 @@ export default function BioManagementPage() {
   useEffect(() => {
     const fetchBio = async () => {
       try {
-        const response = await fetch('/api/bio');
+        const response = await fetch("/api/bio");
         const data = await response.json();
-        
+
         if (data) {
           reset(data);
-          setRoles(data.roles || ['']);
-          setProfileImage(data.profileImage || '');
-          setResumeUrl(data.resume || '');
+          setRoles(data.roles || [""]);
+          setProfileImage(data.profileImage || "");
+          setResumeUrl(data.resume || "");
         }
       } catch (error) {
-        console.error('Error fetching bio:', error);
+        console.error("Error fetching bio:", error);
       }
     };
 
     fetchBio();
   }, [reset]);
 
-  const handleImageUpload = async (e: React.ChangeEvent) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('folder', 'portfolio/profile');
+    formData.append("file", file);
+    formData.append("folder", "portfolio/profile");
 
     try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
@@ -273,8 +277,8 @@ export default function BioManagementPage() {
         setProfileImage(data.url);
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image');
+      console.error("Error uploading image:", error);
+      alert("Failed to upload image");
     } finally {
       setIsUploading(false);
     }
@@ -284,54 +288,54 @@ export default function BioManagementPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== 'application/pdf') {
-      alert('Please upload a PDF file');
+    if (file.type !== "application/pdf") {
+      alert("Please upload a PDF file");
       return;
     }
 
     setIsUploadingResume(true);
     const formData = new FormData();
-    formData.append('resume', file);
+    formData.append("resume", file);
 
     try {
-      const response = await fetch('/api/admin/resume', {
-        method: 'POST',
+      const response = await fetch("/api/admin/resume", {
+        method: "POST",
         body: formData,
       });
 
       const data = await response.json();
       if (data.resumeUrl) {
         setResumeUrl(data.resumeUrl);
-        alert('Resume uploaded successfully!');
+        alert("Resume uploaded successfully!");
       }
     } catch (error) {
-      console.error('Error uploading resume:', error);
-      alert('Failed to upload resume');
+      console.error("Error uploading resume:", error);
+      alert("Failed to upload resume");
     } finally {
       setIsUploadingResume(false);
     }
   };
 
   const handleResumeDelete = async () => {
-    if (!confirm('Are you sure you want to delete the resume?')) return;
+    if (!confirm("Are you sure you want to delete the resume?")) return;
 
     try {
-      const response = await fetch('/api/admin/resume', {
-        method: 'DELETE',
+      const response = await fetch("/api/admin/resume", {
+        method: "DELETE",
       });
 
       if (response.ok) {
-        setResumeUrl('');
-        alert('Resume deleted successfully!');
+        setResumeUrl("");
+        alert("Resume deleted successfully!");
       }
     } catch (error) {
-      console.error('Error deleting resume:', error);
-      alert('Failed to delete resume');
+      console.error("Error deleting resume:", error);
+      alert("Failed to delete resume");
     }
   };
 
   const addRole = () => {
-    setRoles([...roles, '']);
+    setRoles([...roles, ""]);
   };
 
   const removeRole = (index) => {
@@ -349,14 +353,14 @@ export default function BioManagementPage() {
     setSuccess(false);
 
     try {
-      const response = await fetch('/api/bio', {
-        method: 'PUT',
+      const response = await fetch("/api/bio", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...data,
-          roles: roles.filter((r) => r.trim() !== ''),
+          roles: roles.filter((r) => r.trim() !== ""),
           profileImage,
           resume: resumeUrl,
         }),
@@ -366,36 +370,46 @@ export default function BioManagementPage() {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       } else {
-        alert('Failed to update bio');
+        alert("Failed to update bio");
       }
     } catch (error) {
-      console.error('Error updating bio:', error);
-      alert('Failed to update bio');
+      console.error("Error updating bio:", error);
+      alert("Failed to update bio");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    
-      Bio / Profile Management</Title>
-      Manage your personal information and social links</Subtitle>
+    <Container>
+      <Title>Bio / Profile Management</Title>
+      <Subtitle>Manage your personal information and social links</Subtitle>
 
-      {success && ✓ Profile updated successfully!</SuccessMessage>}
+      {success && (
+        <SuccessMessage>✓ Profile updated successfully!</SuccessMessage>
+      )}
 
       <Form onSubmit={handleSubmit(onSubmit)}>
-        
+        <FormGrid>
           {/* Profile Image */}
-          
-            Profile Image</Label>
-            <ImageUploadArea onClick={() => document.getElementById('profile-image')?.click()}>
+          <FormGroup>
+            <Label>Profile Image</Label>
+            <ImageUploadArea
+              onClick={() => document.getElementById("profile-image")?.click()}
+            >
               {profileImage ? (
                 <ImagePreview src={profileImage} alt="Profile" />
               ) : (
-                
-                  <FiUpload size={32} color="#854ce6" style={{ margin: '0 auto 8px' }} />
-                  <p style={{ color: '#b1b2b3' }}>
-                    {isUploading ? 'Uploading...' : 'Click to upload profile image'}
+                <div>
+                  <FiUpload
+                    size={32}
+                    color="#854ce6"
+                    style={{ margin: "0 auto 8px" }}
+                  />
+                  <p style={{ color: "#b1b2b3" }}>
+                    {isUploading
+                      ? "Uploading..."
+                      : "Click to upload profile image"}
                   </p>
                 </div>
               )}
@@ -404,23 +418,23 @@ export default function BioManagementPage() {
               id="profile-image"
               type="file"
               accept="image/*"
-              style={{ display: 'none' }}
+              style={{ display: "none" }}
               onChange={handleImageUpload}
               disabled={isUploading}
             />
           </FormGroup>
 
           {/* Name */}
-          
+          <FormGroup>
             <Label htmlFor="name">Full Name *</Label>
-            <Input id="name" placeholder="John Doe" {...register('name')} />
-            {errors.name && {errors.name.message}</ErrorMessage>}
+            <Input id="name" placeholder="John Doe" {...register("name")} />
+            {errors.name && <ErrorMessage>{errors.name.message}</ErrorMessage>}
           </FormGroup>
 
           {/* Roles */}
-          
-            Roles / Titles</Label>
-            
+          <FormGroup>
+            <Label>Roles / Titles</Label>
+            <RolesContainer>
               {roles.map((role, index) => (
                 <RoleInputGroup key={index}>
                   <Input
@@ -429,7 +443,10 @@ export default function BioManagementPage() {
                     onChange={(e) => updateRole(index, e.target.value)}
                   />
                   {roles.length > 1 && (
-                    <RemoveButton type="button" onClick={() => removeRole(index)}>
+                    <RemoveButton
+                      type="button"
+                      onClick={() => removeRole(index)}
+                    >
                       Remove
                     </RemoveButton>
                   )}
@@ -442,79 +459,115 @@ export default function BioManagementPage() {
           </FormGroup>
 
           {/* Description */}
-          
+          <FormGroup>
             <Label htmlFor="description">About / Description *</Label>
             <Textarea
               id="description"
               placeholder="Tell us about yourself..."
-              {...register('description')}
+              {...register("description")}
             />
-            {errors.description && {errors.description.message}</ErrorMessage>}
+            {errors.description && (
+              <ErrorMessage>{errors.description.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           {/* Social Links */}
-          
+          <FormGroup>
             <Label htmlFor="github">GitHub URL</Label>
-            <Input id="github" placeholder="https://github.com/username" {...register('github')} />
-            {errors.github && {errors.github.message}</ErrorMessage>}
+            <Input
+              id="github"
+              placeholder="https://github.com/username"
+              {...register("github")}
+            />
+            {errors.github && (
+              <ErrorMessage>{errors.github.message}</ErrorMessage>
+            )}
           </FormGroup>
 
-          
+          <FormGroup>
             <Label htmlFor="linkedin">LinkedIn URL</Label>
             <Input
               id="linkedin"
               placeholder="https://linkedin.com/in/username"
-              {...register('linkedin')}
+              {...register("linkedin")}
             />
-            {errors.linkedin && {errors.linkedin.message}</ErrorMessage>}
+            {errors.linkedin && (
+              <ErrorMessage>{errors.linkedin.message}</ErrorMessage>
+            )}
           </FormGroup>
 
-          
+          <FormGroup>
             <Label htmlFor="twitter">Twitter URL</Label>
-            <Input id="twitter" placeholder="https://twitter.com/username" {...register('twitter')} />
-            {errors.twitter && {errors.twitter.message}</ErrorMessage>}
+            <Input
+              id="twitter"
+              placeholder="https://twitter.com/username"
+              {...register("twitter")}
+            />
+            {errors.twitter && (
+              <ErrorMessage>{errors.twitter.message}</ErrorMessage>
+            )}
           </FormGroup>
 
-          
+          <FormGroup>
             <Label htmlFor="insta">Instagram URL</Label>
             <Input
               id="insta"
               placeholder="https://instagram.com/username"
-              {...register('insta')}
+              {...register("insta")}
             />
-            {errors.insta && {errors.insta.message}</ErrorMessage>}
+            {errors.insta && (
+              <ErrorMessage>{errors.insta.message}</ErrorMessage>
+            )}
           </FormGroup>
 
-          
+          <FormGroup>
             <Label htmlFor="facebook">Facebook URL</Label>
             <Input
               id="facebook"
               placeholder="https://facebook.com/username"
-              {...register('facebook')}
+              {...register("facebook")}
             />
-            {errors.facebook && {errors.facebook.message}</ErrorMessage>}
+            {errors.facebook && (
+              <ErrorMessage>{errors.facebook.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
             <Label>Resume / CV (PDF)</Label>
             {resumeUrl ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ 
-                  background: 'rgba(133, 76, 230, 0.1)', 
-                  border: '1px solid rgba(133, 76, 230, 0.3)',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
+                <div
+                  style={{
+                    background: "rgba(133, 76, 230, 0.1)",
+                    border: "1px solid rgba(133, 76, 230, 0.3)",
+                    borderRadius: "8px",
+                    padding: "16px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <div>
-                    <p style={{ color: '#f2f3f4', marginBottom: '4px', fontWeight: '500' }}>Current Resume</p>
-                    <a 
-                      href={resumeUrl} 
-                      target="_blank" 
+                    <p
+                      style={{
+                        color: "#f2f3f4",
+                        marginBottom: "4px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Current Resume
+                    </p>
+                    <a
+                      href={resumeUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: '#854ce6', fontSize: '14px' }}
+                      style={{ color: "#854ce6", fontSize: "14px" }}
                     >
                       View / Download Resume
                     </a>
@@ -525,10 +578,18 @@ export default function BioManagementPage() {
                 </div>
               </div>
             ) : (
-              <ImageUploadArea onClick={() => document.getElementById('resume-file')?.click()}>
-                <FiUpload size={32} color="#854ce6" style={{ margin: '0 auto 8px' }} />
-                <p style={{ color: '#b1b2b3' }}>
-                  {isUploadingResume ? 'Uploading...' : 'Click to upload resume (PDF only)'}
+              <ImageUploadArea
+                onClick={() => document.getElementById("resume-file")?.click()}
+              >
+                <FiUpload
+                  size={32}
+                  color="#854ce6"
+                  style={{ margin: "0 auto 8px" }}
+                />
+                <p style={{ color: "#b1b2b3" }}>
+                  {isUploadingResume
+                    ? "Uploading..."
+                    : "Click to upload resume (PDF only)"}
                 </p>
               </ImageUploadArea>
             )}
@@ -536,7 +597,7 @@ export default function BioManagementPage() {
               id="resume-file"
               type="file"
               accept=".pdf,application/pdf"
-              style={{ display: 'none' }}
+              style={{ display: "none" }}
               onChange={handleResumeUpload}
               disabled={isUploadingResume}
             />
@@ -544,11 +605,10 @@ export default function BioManagementPage() {
 
           <SubmitButton type="submit" disabled={isLoading}>
             <FiSave />
-            {isLoading ? 'Saving...' : 'Save Changes'}
+            {isLoading ? "Saving..." : "Save Changes"}
           </SubmitButton>
         </FormGrid>
       </Form>
     </Container>
   );
 }
-
