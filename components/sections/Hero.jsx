@@ -4,7 +4,7 @@ import React from "react";
 import styled from "styled-components";
 import TypeWriter from "typewriter-effect";
 import Tilt from "react-parallax-tilt";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"; // eslint-disable-line no-unused-vars
 import {
   headContainerAnimation,
   headTextAnimation,
