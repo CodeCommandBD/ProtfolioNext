@@ -1,11 +1,26 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-// import { getServerSession } from "next-auth";
-// import { authOptions } from "@/lib/authOptions";
 import dbConnect from "@/lib/db/mongoose";
 import Bio from "@/lib/db/models/Bio";
 import { v2 as cloudinary } from "cloudinary";
-import { isBuildTime, getBuildTimeSession } from "@/lib/buildHelpers";
+
+// Build-safe session check
+async function checkAuth() {
+  // During build, Next.js tries to analyze routes statically
+  // Skip auth check during build to prevent crashes
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return null;
+  }
+
+  try {
+    const { getServerSession } = await import("next-auth/next");
+    const { authOptions } = await import("@/lib/authOptions");
+    return await getServerSession(authOptions);
+  } catch (error) {
+    console.error("Auth check failed:", error);
+    return null;
+  }
+}
 
 const configureCloudinary = () => {
   cloudinary.config({
@@ -18,7 +33,9 @@ const configureCloudinary = () => {
 export async function POST(request) {
   try {
     configureCloudinary();
-    const session = getBuildTimeSession();
+
+    const session = await checkAuth();
+
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -29,73 +46,70 @@ export async function POST(request) {
     const file = formData.get("resume");
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Convert file to base64
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64File = `data:${file.type};base64,${buffer.toString("base64")}`;
+    const buffer = await file.arrayBuffer();
+    const bytes = Buffer.from(buffer);
 
-    // Upload to Cloudinary
-    const uploadResponse = await cloudinary.uploader.upload(base64File, {
-      folder: "portfolio/resume",
-      resource_type: "raw",
-      format: "pdf",
-    });
-
-    // Update Bio with resume URL
-    const bio = await Bio.findOneAndUpdate(
-      {},
-      { resume: uploadResponse.secure_url },
-      { new: true, upsert: true }
-    );
-
-    return NextResponse.json({
-      success: true,
-      resumeUrl: uploadResponse.secure_url,
-      bio,
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            resource_type: "auto",
+            folder: "portfolio/docs",
+            use_filename: true,
+            unique_filename: true,
+          },
+          async (err, result) => {
+            if (err) {
+              resolve(
+                NextResponse.json({ error: "Upload failed" }, { status: 500 })
+              );
+            } else {
+              const bio = await Bio.findOne({});
+              if (bio) {
+                bio.resume = result.secure_url;
+                await bio.save();
+              } else {
+                await Bio.create({ resume: result.secure_url });
+              }
+              resolve(NextResponse.json(result));
+            }
+          }
+        )
+        .end(bytes);
     });
   } catch (error) {
-    console.error("Resume upload error:", error);
     return NextResponse.json(
-      { error: "Failed to upload resume" },
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }
 }
 
-// DELETE - Remove resume
 export async function DELETE(request) {
   try {
     configureCloudinary();
-    const session = getBuildTimeSession();
+
+    const session = await checkAuth();
+
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await dbConnect();
-
     const bio = await Bio.findOne({});
 
     if (bio?.resume) {
-      // Extract public_id from Cloudinary URL
-      const urlParts = bio.resume.split("/");
-      const publicIdWithExt = urlParts.slice(-2).join("/");
-      const publicId = publicIdWithExt.replace(".pdf", "");
-
-      // Delete from Cloudinary
-      await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+      bio.resume = "";
+      await bio.save();
     }
 
-    // Remove resume URL from Bio
-    await Bio.findOneAndUpdate({}, { resume: null });
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ message: "Resume deleted" });
   } catch (error) {
-    console.error("Resume delete error:", error);
     return NextResponse.json(
-      { error: "Failed to delete resume" },
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }
