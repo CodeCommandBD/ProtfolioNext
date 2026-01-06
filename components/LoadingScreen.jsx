@@ -4,13 +4,6 @@ import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { motion } from "framer-motion";
 
-const vibrate = keyframes`
-  0%, 100% { transform: translateX(0) rotate(0deg); }
-  25% { transform: translateX(-2px) rotate(-1deg); }
-  50% { transform: translateX(2px) rotate(1deg); }
-  75% { transform: translateX(-2px) rotate(-1deg); }
-`;
-
 const flameFlicker = keyframes`
   0%, 100% { 
     opacity: 1; 
