@@ -1,319 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styled from "styled-components";
 import {
   FiPlus,
   FiEdit2,
   FiTrash2,
   FiSave,
   FiX,
-  FiUpload,
   FiExternalLink,
 } from "react-icons/fi";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-// Reuse styled components
-const Container = styled.div`
-  max-width: 1400px;
-`;
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-`;
-const Title = styled.h1`
-  font-size: 32px;
-  font-weight: 700;
-  color: #f2f3f4;
-`;
-const AddButton = styled.button`
-  background: linear-gradient(
-    225deg,
-    hsla(271, 100%, 50%, 1) 0%,
-    hsla(294, 100%, 50%, 1) 100%
-  );
-  border: none;
-  border-radius: 8px;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(133, 76, 230, 0.3);
-  }
-`;
-const ProjectsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 24px;
-`;
-const ProjectCard = styled.div`
-  background: #0f0f14;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  &:hover {
-    transform: translateY(-4px);
-    border-color: #854ce6;
-  }
-`;
-const ProjectImage = styled.img`
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-`;
-const ProjectContent = styled.div`
-  padding: 20px;
-`;
-const ProjectHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  margin-bottom: 12px;
-`;
-const ProjectTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #f2f3f4;
-  margin-bottom: 4px;
-`;
-const ProjectDate = styled.div`
-  font-size: 12px;
-  color: #854ce6;
-  margin-bottom: 8px;
-`;
-const ProjectDescription = styled.p`
-  font-size: 14px;
-  color: #b1b2b3;
-  line-height: 1.6;
-  margin-bottom: 12px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-const TagsContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-`;
-const Tag = styled.span`
-  background: rgba(133, 76, 230, 0.1);
-  border: 1px solid rgba(133, 76, 230, 0.3);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 11px;
-  color: #854ce6;
-`;
-const CategoryBadge = styled.span`
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 11px;
-  color: #10b981;
-  display: inline-block;
-  margin-bottom: 8px;
-`;
-const ProjectLinks = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-`;
-const LinkButton = styled.a`
-  background: rgba(133, 76, 230, 0.1);
-  border: 1px solid rgba(133, 76, 230, 0.3);
-  border-radius: 6px;
-  padding: 6px 12px;
-  color: #854ce6;
-  font-size: 12px;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  &:hover {
-    background: rgba(133, 76, 230, 0.2);
-  }
-`;
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 8px;
-`;
-const IconButton = styled.button`
-  background: ${({ variant }) =>
-    variant === "delete"
-      ? "rgba(255, 107, 107, 0.1)"
-      : "rgba(133, 76, 230, 0.1)"};
-  border: 1px solid
-    ${({ variant }) =>
-      variant === "delete"
-        ? "rgba(255, 107, 107, 0.3)"
-        : "rgba(133, 76, 230, 0.3)"};
-  border-radius: 6px;
-  padding: 8px;
-  color: ${({ variant }) => (variant === "delete" ? "#ff6b6b" : "#854ce6")};
-  cursor: pointer;
-  &:hover {
-    background: ${({ variant }) =>
-      variant === "delete"
-        ? "rgba(255, 107, 107, 0.2)"
-        : "rgba(133, 76, 230, 0.2)"};
-  }
-`;
-const Modal = styled.div`
-  display: ${({ isOpen }) => (isOpen ? "flex" : "none")};
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-`;
-const ModalContent = styled.div`
-  background: #0f0f14;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 32px;
-  max-width: 800px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-`;
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-`;
-const ModalTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 600;
-  color: #f2f3f4;
-`;
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  color: #b1b2b3;
-  cursor: pointer;
-  &:hover {
-    color: #f2f3f4;
-  }
-`;
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-const Label = styled.label`
-  font-size: 14px;
-  font-weight: 500;
-  color: #f2f3f4;
-`;
-const Input = styled.input`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 16px;
-  color: #f2f3f4;
-  &:focus {
-    outline: none;
-    border-color: #854ce6;
-  }
-`;
-const Textarea = styled.textarea`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 16px;
-  color: #f2f3f4;
-  min-height: 100px;
-  resize: vertical;
-  font-family: inherit;
-  &:focus {
-    outline: none;
-    border-color: #854ce6;
-  }
-`;
-const Select = styled.select`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 16px;
-  color: #f2f3f4;
-  &:focus {
-    outline: none;
-    border-color: #854ce6;
-  }
-`;
-const ImageUploadButton = styled.button`
-  background: rgba(133, 76, 230, 0.1);
-  border: 1px solid rgba(133, 76, 230, 0.3);
-  border-radius: 8px;
-  padding: 12px 16px;
-  color: #854ce6;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  &:hover {
-    background: rgba(133, 76, 230, 0.2);
-  }
-`;
-const SubmitButton = styled.button`
-  background: linear-gradient(
-    225deg,
-    hsla(271, 100%, 50%, 1) 0%,
-    hsla(294, 100%, 50%, 1) 100%
-  );
-  border: none;
-  border-radius: 8px;
-  padding: 14px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-const ErrorMessage = styled.span`
-  color: #ff6b6b;
-  font-size: 14px;
-`;
-
 const projectSchema = z.object({
   title: z.string().min(1, "Title is required"),
   date: z.string().min(1, "Date is required"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+  description: z.string().min(1, "Description is required"),
+  image: z.string().url("Must be a valid URL"),
+  tags: z.array(z.string()).min(1, "At least one tag is required"),
   category: z.string().min(1, "Category is required"),
   github: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   webapp: z.string().url("Must be a valid URL").optional().or(z.literal("")),
@@ -322,16 +27,17 @@ const projectSchema = z.object({
 export default function ProjectsManagementPage() {
   const [projects, setProjects] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [projectImage, setProjectImage] = useState("");
-  const [tags, setTags] = useState([""]);
-  const [isUploading, setIsUploading] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+  const [currentTags, setCurrentTags] = useState([]);
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
     reset,
+    setValue,
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(projectSchema),
   });
@@ -350,304 +56,388 @@ export default function ProjectsManagementPage() {
     }
   };
 
-  const handleOpenModal = (item) => {
-    if (item) {
-      setEditingItem(item);
-      reset(item);
-      setProjectImage(item.image);
-      setTags(item.tags.length > 0 ? item.tags : [""]);
+  const handleOpenModal = (project) => {
+    if (project) {
+      setEditingProject(project);
+      setCurrentTags(project.tags || []);
+      reset(project);
     } else {
-      setEditingItem(null);
+      setEditingProject(null);
+      setCurrentTags([]);
       reset({
         title: "",
         date: "",
         description: "",
-        category: "web app",
+        image: "",
+        tags: [],
+        category: "",
         github: "",
         webapp: "",
       });
-      setProjectImage("");
-      setTags([""]);
     }
     setIsModalOpen(true);
   };
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingProject(null);
+    setCurrentTags([]);
+    setTagInput("");
+    reset();
+  };
 
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("folder", "portfolio/projects");
-
-    try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await response.json();
-      if (data.url) setProjectImage(data.url);
-    } catch (error) {
-      alert("Failed to upload image");
-    } finally {
-      setIsUploading(false);
+  const handleAddTag = () => {
+    if (tagInput.trim() && !currentTags.includes(tagInput.trim())) {
+      const newTags = [...currentTags, tagInput.trim()];
+      setCurrentTags(newTags);
+      setValue("tags", newTags);
+      setTagInput("");
     }
   };
 
+  const handleRemoveTag = (tagToRemove) => {
+    const newTags = currentTags.filter((tag) => tag !== tagToRemove);
+    setCurrentTags(newTags);
+    setValue("tags", newTags);
+  };
+
   const onSubmit = async (data) => {
-    if (!projectImage) {
-      alert("Please upload a project image");
-      return;
-    }
-
-    const payload = {
-      ...data,
-      image: projectImage,
-      tags: tags.filter((t) => t.trim() !== ""),
-      order: editingItem?.order ?? projects.length,
-    };
-
+    setIsLoading(true);
     try {
-      const url = editingItem
-        ? `/api/projects/${editingItem._id}`
+      const url = editingProject
+        ? `/api/projects/${editingProject._id}`
         : "/api/projects";
-      const method = editingItem ? "PUT" : "POST";
+      const method = editingProject ? "PUT" : "POST";
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...data, tags: currentTags }),
       });
 
       if (response.ok) {
         await fetchProjects();
-        setIsModalOpen(false);
+        handleCloseModal();
       } else {
         alert("Failed to save project");
       }
     } catch (error) {
+      console.error("Error saving project:", error);
       alert("Failed to save project");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this project?")) return;
+
     try {
-      const response = await fetch(`/api/projects/${id}`, { method: "DELETE" });
-      if (response.ok) await fetchProjects();
+      const response = await fetch(`/api/projects/${id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        await fetchProjects();
+      } else {
+        alert("Failed to delete project");
+      }
     } catch (error) {
       console.error("Error deleting project:", error);
+      alert("Failed to delete project");
     }
   };
 
   return (
-    <Container>
-      <Header>
-        <Title>Projects Management</Title>
-        <AddButton onClick={() => handleOpenModal()}>
+    <div className="max-w-[1400px]">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-100">
+          Projects Management
+        </h1>
+        <button
+          onClick={() => handleOpenModal()}
+          className="bg-gradient-to-r from-purple-600 to-pink-600 border-none rounded-lg px-6 py-3 text-sm font-semibold text-white cursor-pointer flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/30"
+        >
           <FiPlus />
           Add Project
-        </AddButton>
-      </Header>
+        </button>
+      </div>
 
-      <ProjectsGrid>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects.map((project) => (
-          <ProjectCard key={project._id}>
-            <ProjectImage src={project.image} alt={project.title} />
-            <ProjectContent>
-              <ProjectHeader>
-                <div style={{ flex: 1 }}>
-                  <CategoryBadge>{project.category}</CategoryBadge>
-                  <ProjectTitle>{project.title}</ProjectTitle>
-                  <ProjectDate>{project.date}</ProjectDate>
+          <div
+            key={project._id}
+            className="bg-[#0f0f14] border border-white/10 rounded-xl overflow-hidden transition-all hover:border-purple-600/50"
+          >
+            <img
+              src={project.image}
+              alt={project.title}
+              className="w-full h-48 object-cover"
+            />
+            <div className="p-5">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-100 mb-1">
+                    {project.title}
+                  </h3>
+                  <div className="text-xs text-purple-600 mb-2">
+                    {project.date}
+                  </div>
                 </div>
-                <ActionButtons>
-                  <IconButton onClick={() => handleOpenModal(project)}>
-                    <FiEdit2 />
-                  </IconButton>
-                  <IconButton
-                    variant="delete"
-                    onClick={() => handleDelete(project._id)}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleOpenModal(project)}
+                    className="bg-purple-600/10 border border-purple-600/30 rounded-md p-1.5 text-purple-600 cursor-pointer transition-all hover:bg-purple-600/20"
                   >
-                    <FiTrash2 />
-                  </IconButton>
-                </ActionButtons>
-              </ProjectHeader>
-              <ProjectDescription>{project.description}</ProjectDescription>
-              <TagsContainer>
-                {project.tags.slice(0, 5).map((tag, idx) => (
-                  <Tag key={idx}>{tag}</Tag>
+                    <FiEdit2 className="text-sm" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(project._id)}
+                    className="bg-red-500/10 border border-red-500/30 rounded-md p-1.5 text-red-500 cursor-pointer transition-all hover:bg-red-500/20"
+                  >
+                    <FiTrash2 className="text-sm" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-sm text-gray-400 leading-relaxed mb-3 line-clamp-3">
+                {project.description}
+              </p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {project.tags?.slice(0, 3).map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-purple-600/10 border border-purple-600/30 rounded px-2 py-1 text-xs text-purple-600"
+                  >
+                    {tag}
+                  </span>
                 ))}
-                {project.tags.length > 5 && (
-                  <Tag>+{project.tags.length - 5}</Tag>
+                {project.tags?.length > 3 && (
+                  <span className="text-xs text-gray-400">
+                    +{project.tags.length - 3} more
+                  </span>
                 )}
-              </TagsContainer>
-              <ProjectLinks>
+              </div>
+              <div className="flex gap-2">
                 {project.github && (
-                  <LinkButton href={project.github} target="_blank">
-                    <FiExternalLink size={12} />
-                    Code
-                  </LinkButton>
+                  <a
+                    href={project.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs text-purple-600 hover:underline"
+                  >
+                    <FiExternalLink /> GitHub
+                  </a>
                 )}
                 {project.webapp && (
-                  <LinkButton href={project.webapp} target="_blank">
-                    <FiExternalLink size={12} />
-                    Live
-                  </LinkButton>
+                  <a
+                    href={project.webapp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs text-purple-600 hover:underline"
+                  >
+                    <FiExternalLink /> Live Demo
+                  </a>
                 )}
-              </ProjectLinks>
-            </ProjectContent>
-          </ProjectCard>
+              </div>
+            </div>
+          </div>
         ))}
-      </ProjectsGrid>
+      </div>
 
-      <Modal isOpen={isModalOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>{editingItem ? "Edit" : "Add"} Project</ModalTitle>
-            <CloseButton onClick={() => setIsModalOpen(false)}>
-              <FiX size={24} />
-            </CloseButton>
-          </ModalHeader>
-
-          <Form onSubmit={handleSubmit(onSubmit)}>
-            <FormGroup>
-              <Label>Project Image</Label>
-              <ImageUploadButton
-                type="button"
-                onClick={() =>
-                  document.getElementById("project-image")?.click()
-                }
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[1000] p-5">
+          <div className="bg-[#0f0f14] border border-white/10 rounded-xl p-8 max-w-[700px] w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-100">
+                {editingProject ? "Edit" : "Add"} Project
+              </h2>
+              <button
+                onClick={handleCloseModal}
+                className="bg-none border-none text-gray-400 cursor-pointer p-1 hover:text-gray-100"
               >
-                <FiUpload />
-                {isUploading
-                  ? "Uploading..."
-                  : projectImage
-                  ? "Change Image"
-                  : "Upload Image"}
-              </ImageUploadButton>
-              {projectImage && (
-                <img
-                  src={projectImage}
-                  alt="Preview"
-                  style={{
-                    width: "100%",
-                    maxHeight: "200px",
-                    objectFit: "cover",
-                    borderRadius: "8px",
-                    marginTop: "8px",
-                  }}
-                />
-              )}
-              <input
-                id="project-image"
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={handleImageUpload}
-              />
-            </FormGroup>
+                <FiX className="text-2xl" />
+              </button>
+            </div>
 
-            <FormGroup>
-              <Label>Title *</Label>
-              <Input placeholder="Project Name" {...register("title")} />
-              {errors.title && (
-                <ErrorMessage>{errors.title.message}</ErrorMessage>
-              )}
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Date *</Label>
-              <Input placeholder="Jan 2024 - Mar 2024" {...register("date")} />
-              {errors.date && (
-                <ErrorMessage>{errors.date.message}</ErrorMessage>
-              )}
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Category *</Label>
-              <Select {...register("category")}>
-                <option value="web app">Web App</option>
-                <option value="live web app">Live Web App</option>
-                <option value="mobile app">Mobile App</option>
-              </Select>
-              {errors.category && (
-                <ErrorMessage>{errors.category.message}</ErrorMessage>
-              )}
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Description *</Label>
-              <Textarea
-                placeholder="Describe your project..."
-                {...register("description")}
-              />
-              {errors.description && (
-                <ErrorMessage>{errors.description.message}</ErrorMessage>
-              )}
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Tags</Label>
-              {tags.map((tag, idx) => (
-                <div key={idx} style={{ display: "flex", gap: "8px" }}>
-                  <Input
-                    value={tag}
-                    onChange={(e) => {
-                      const newTags = [...tags];
-                      newTags[idx] = e.target.value;
-                      setTags(newTags);
-                    }}
-                    placeholder="e.g., React, Node.js"
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="flex flex-col gap-5"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-100">
+                    Project Title
+                  </label>
+                  <input
+                    {...register("title")}
+                    placeholder="e.g., Portfolio Website"
+                    className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
                   />
-                  {tags.length > 1 && (
-                    <IconButton
-                      type="button"
-                      variant="delete"
-                      onClick={() => setTags(tags.filter((_, i) => i !== idx))}
-                    >
-                      <FiTrash2 />
-                    </IconButton>
+                  {errors.title && (
+                    <span className="text-red-500 text-sm">
+                      {errors.title.message}
+                    </span>
                   )}
                 </div>
-              ))}
-              <ImageUploadButton
-                type="button"
-                onClick={() => setTags([...tags, ""])}
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-100">
+                    Date
+                  </label>
+                  <input
+                    {...register("date")}
+                    placeholder="e.g., Jan 2024 - Present"
+                    className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
+                  />
+                  {errors.date && (
+                    <span className="text-red-500 text-sm">
+                      {errors.date.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-gray-100">
+                  Description
+                </label>
+                <textarea
+                  {...register("description")}
+                  rows={4}
+                  placeholder="Describe your project..."
+                  className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600 resize-none"
+                />
+                {errors.description && (
+                  <span className="text-red-500 text-sm">
+                    {errors.description.message}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-gray-100">
+                  Image URL
+                </label>
+                <input
+                  {...register("image")}
+                  placeholder="https://example.com/project.png"
+                  className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
+                />
+                {errors.image && (
+                  <span className="text-red-500 text-sm">
+                    {errors.image.message}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-gray-100">
+                  Category
+                </label>
+                <input
+                  {...register("category")}
+                  placeholder="e.g., Web App"
+                  className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
+                />
+                {errors.category && (
+                  <span className="text-red-500 text-sm">
+                    {errors.category.message}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-gray-100">
+                  Tags
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), handleAddTag())
+                    }
+                    placeholder="Add a tag and press Enter"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddTag}
+                    className="bg-purple-600/10 border border-purple-600/30 rounded-lg px-4 py-3 text-purple-600 cursor-pointer hover:bg-purple-600/20"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {currentTags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="bg-purple-600/10 border border-purple-600/30 rounded px-3 py-1 text-sm text-purple-600 flex items-center gap-2"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="text-red-500 hover:text-red-400"
+                      >
+                        <FiX />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                {errors.tags && (
+                  <span className="text-red-500 text-sm">
+                    {errors.tags.message}
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-100">
+                    GitHub URL (Optional)
+                  </label>
+                  <input
+                    {...register("github")}
+                    placeholder="https://github.com/..."
+                    className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
+                  />
+                  {errors.github && (
+                    <span className="text-red-500 text-sm">
+                      {errors.github.message}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-100">
+                    Live Demo URL (Optional)
+                  </label>
+                  <input
+                    {...register("webapp")}
+                    placeholder="https://example.com"
+                    className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
+                  />
+                  {errors.webapp && (
+                    <span className="text-red-500 text-sm">
+                      {errors.webapp.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 border-none rounded-lg px-6 py-3.5 text-base font-semibold text-white cursor-pointer flex items-center justify-center gap-2 mt-2 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                + Add Tag
-              </ImageUploadButton>
-            </FormGroup>
-
-            <FormGroup>
-              <Label>GitHub URL</Label>
-              <Input
-                placeholder="https://github.com/username/repo"
-                {...register("github")}
-              />
-              {errors.github && (
-                <ErrorMessage>{errors.github.message}</ErrorMessage>
-              )}
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Live Demo URL</Label>
-              <Input
-                placeholder="https://example.com"
-                {...register("webapp")}
-              />
-              {errors.webapp && (
-                <ErrorMessage>{errors.webapp.message}</ErrorMessage>
-              )}
-            </FormGroup>
-
-            <SubmitButton type="submit">
-              <FiSave />
-              Save Project
-            </SubmitButton>
-          </Form>
-        </ModalContent>
-      </Modal>
-    </Container>
+                <FiSave />
+                {isLoading ? "Saving..." : "Save Project"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

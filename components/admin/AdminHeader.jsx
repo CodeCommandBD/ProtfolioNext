@@ -1,93 +1,7 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
-import styled from "styled-components";
 import { FiLogOut, FiUser } from "react-icons/fi";
-
-const Header = styled.header`
-  background: #0f0f14;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 16px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  @media (max-width: 768px) {
-    padding: 16px;
-    margin-left: 56px;
-  }
-`;
-
-const UserInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #f2f3f4;
-`;
-
-const UserIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #854ce6 0%, #b854e6 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    font-size: 20px;
-  }
-`;
-
-const UserDetails = styled.div`
-  display: flex;
-  flex-direction: column;
-
-  @media (max-width: 480px) {
-    display: none;
-  }
-`;
-
-const UserName = styled.span`
-  font-weight: 600;
-  font-size: 14px;
-`;
-
-const UserEmail = styled.span`
-  font-size: 12px;
-  color: #b1b2b3;
-`;
-
-const LogoutButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: 8px;
-  padding: 10px 16px;
-  color: #ff6b6b;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(255, 107, 107, 0.2);
-  }
-
-  svg {
-    font-size: 18px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 10px;
-
-    span {
-      display: none;
-    }
-  }
-`;
 
 export default function AdminHeader() {
   const { data: session } = useSession();
@@ -97,21 +11,28 @@ export default function AdminHeader() {
   };
 
   return (
-    <Header>
-      <UserInfo>
-        <UserIcon>
-          <FiUser />
-        </UserIcon>
-        <UserDetails>
-          <UserName>{session?.user?.name || "Admin"}</UserName>
-          <UserEmail>{session?.user?.email || "admin@example.com"}</UserEmail>
-        </UserDetails>
-      </UserInfo>
+    <header className="bg-[#0f0f14] border-b border-white/10 px-6 py-4 flex justify-between items-center md:px-4 md:ml-14">
+      <div className="flex items-center gap-3 text-gray-100">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+          <FiUser className="text-xl" />
+        </div>
+        <div className="flex flex-col sm:hidden">
+          <span className="font-semibold text-sm">
+            {session?.user?.name || "Admin"}
+          </span>
+          <span className="text-xs text-gray-400">
+            {session?.user?.email || "admin@example.com"}
+          </span>
+        </div>
+      </div>
 
-      <LogoutButton onClick={handleLogout}>
-        <FiLogOut />
-        <span>Logout</span>
-      </LogoutButton>
-    </Header>
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-2.5 text-red-500 text-sm font-medium cursor-pointer transition-all hover:bg-red-500/20 sm:px-2.5"
+      >
+        <FiLogOut className="text-lg" />
+        <span className="sm:hidden">Logout</span>
+      </button>
+    </header>
   );
 }

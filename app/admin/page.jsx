@@ -1,212 +1,153 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styled from "styled-components";
 import { FiUser, FiAward, FiBriefcase, FiBook, FiFolder } from "react-icons/fi";
 
-const Container = styled.div`
-  max-width: 1400px;
-`;
-
-const Title = styled.h1`
-  font-size: 32px;
-  font-weight: 700;
-  color: #f2f3f4;
-  margin-bottom: 8px;
-`;
-
-const Subtitle = styled.p`
-  font-size: 16px;
-  color: #b1b2b3;
-  margin-bottom: 32px;
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-`;
-
-const StatCard = styled.div`
-  background: #0f0f14;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: #854ce6;
-    transform: translateY(-2px);
-  }
-`;
-
-const StatIcon =
-  styled.div <
-  { color } >
-  `
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  background: ${({ color }) => color}15;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ color }) => color};
-
-  svg {
-    font-size: 28px;
-  }
-`;
-
-const StatInfo = styled.div`
-  flex: 1;
-`;
-
-const StatLabel = styled.div`
-  font-size: 14px;
-  color: #b1b2b3;
-  margin-bottom: 4px;
-`;
-
-const StatValue = styled.div`
-  font-size: 28px;
-  font-weight: 700;
-  color: #f2f3f4;
-`;
-
-const QuickActions = styled.div`
-  background: #0f0f14;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 24px;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 20px;
-  font-weight: 600;
-  color: #f2f3f4;
-  margin-bottom: 16px;
-`;
-
-const ActionGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-`;
-
-const ActionButton = styled.a`
-  background: rgba(133, 76, 230, 0.1);
-  border: 1px solid rgba(133, 76, 230, 0.3);
-  border-radius: 8px;
-  padding: 16px;
-  text-decoration: none;
-  color: #854ce6;
-  font-weight: 500;
-  text-align: center;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(133, 76, 230, 0.2);
-    transform: translateY(-2px);
-  }
-`;
+const stats = [
+  {
+    label: "Bio / Profile",
+    icon: FiUser,
+    color: "#854ce6",
+    key: "bio",
+  },
+  {
+    label: "Skills",
+    icon: FiAward,
+    color: "#4ecdc4",
+    key: "skills",
+  },
+  {
+    label: "Experience",
+    icon: FiBriefcase,
+    color: "#ff6b6b",
+    key: "experience",
+  },
+  {
+    label: "Education",
+    icon: FiBook,
+    color: "#ffd93d",
+    key: "education",
+  },
+  {
+    label: "Projects",
+    icon: FiFolder,
+    color: "#6bcf7f",
+    key: "projects",
+  },
+];
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({
+  const [counts, setCounts] = useState({
+    bio: 0,
     skills: 0,
     experience: 0,
     education: 0,
     projects: 0,
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchCounts = async () => {
       try {
-        const [skills, experience, education, projects] = await Promise.all([
-          fetch("/api/skills").then((r) => r.json()),
-          fetch("/api/experience").then((r) => r.json()),
-          fetch("/api/education").then((r) => r.json()),
-          fetch("/api/projects").then((r) => r.json()),
+        const [bioRes, skillsRes, expRes, eduRes, projRes] = await Promise.all([
+          fetch("/api/bio"),
+          fetch("/api/skills"),
+          fetch("/api/experience"),
+          fetch("/api/education"),
+          fetch("/api/projects"),
         ]);
 
-        setStats({
-          skills: skills.length || 0,
-          experience: experience.length || 0,
-          education: education.length || 0,
-          projects: projects.length || 0,
+        const [bio, skills, experience, education, projects] =
+          await Promise.all([
+            bioRes.json(),
+            skillsRes.json(),
+            expRes.json(),
+            eduRes.json(),
+            projRes.json(),
+          ]);
+
+        setCounts({
+          bio: bio ? 1 : 0,
+          skills: Array.isArray(skills) ? skills.length : 0,
+          experience: Array.isArray(experience) ? experience.length : 0,
+          education: Array.isArray(education) ? education.length : 0,
+          projects: Array.isArray(projects) ? projects.length : 0,
         });
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        console.error("Error fetching counts:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchStats();
+    fetchCounts();
   }, []);
 
   return (
-    <Container>
-      <Title>Dashboard</Title>
-      <Subtitle>Welcome back! Here's an overview of your portfolio.</Subtitle>
+    <div className="max-w-[1400px]">
+      <h1 className="text-3xl font-bold text-gray-100 mb-2">Dashboard</h1>
+      <p className="text-base text-gray-400 mb-8">
+        Welcome to your portfolio admin panel
+      </p>
 
-      <StatsGrid>
-        <StatCard>
-          <StatIcon color="#854ce6">
-            <FiAward />
-          </StatIcon>
-          <StatInfo>
-            <StatLabel>Skill Categories</StatLabel>
-            <StatValue>{stats.skills}</StatValue>
-          </StatInfo>
-        </StatCard>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 mb-8">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.key}
+              className="bg-[#0f0f14] border border-white/10 rounded-xl p-6 flex items-center gap-4 transition-all hover:border-purple-600 hover:-translate-y-0.5"
+            >
+              <div
+                className="w-14 h-14 rounded-xl flex items-center justify-center"
+                style={{
+                  backgroundColor: `${stat.color}15`,
+                  color: stat.color,
+                }}
+              >
+                <Icon className="text-[28px]" />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm text-gray-400 mb-1">{stat.label}</div>
+                <div className="text-[28px] font-bold text-gray-100">
+                  {loading ? "..." : counts[stat.key]}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-        <StatCard>
-          <StatIcon color="#3b82f6">
-            <FiBriefcase />
-          </StatIcon>
-          <StatInfo>
-            <StatLabel>Work Experience</StatLabel>
-            <StatValue>{stats.experience}</StatValue>
-          </StatInfo>
-        </StatCard>
-
-        <StatCard>
-          <StatIcon color="#10b981">
-            <FiBook />
-          </StatIcon>
-          <StatInfo>
-            <StatLabel>Education</StatLabel>
-            <StatValue>{stats.education}</StatValue>
-          </StatInfo>
-        </StatCard>
-
-        <StatCard>
-          <StatIcon color="#f59e0b">
-            <FiFolder />
-          </StatIcon>
-          <StatInfo>
-            <StatLabel>Projects</StatLabel>
-            <StatValue>{stats.projects}</StatValue>
-          </StatInfo>
-        </StatCard>
-      </StatsGrid>
-
-      <QuickActions>
-        <SectionTitle>Quick Actions</SectionTitle>
-        <ActionGrid>
-          <ActionButton href="/admin/bio">Manage Profile</ActionButton>
-          <ActionButton href="/admin/skills">Add Skills</ActionButton>
-          <ActionButton href="/admin/experience">Add Experience</ActionButton>
-          <ActionButton href="/admin/education">Add Education</ActionButton>
-          <ActionButton href="/admin/projects">Add Project</ActionButton>
-          <ActionButton href="/" target="_blank">
-            View Live Site
-          </ActionButton>
-        </ActionGrid>
-      </QuickActions>
-    </Container>
+      <div className="bg-[#0f0f14] border border-white/10 rounded-xl p-6">
+        <h2 className="text-xl font-semibold text-gray-100 mb-4">
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { href: "/admin/bio", label: "Update Bio", icon: FiUser },
+            { href: "/admin/skills", label: "Manage Skills", icon: FiAward },
+            {
+              href: "/admin/experience",
+              label: "Add Experience",
+              icon: FiBriefcase,
+            },
+            { href: "/admin/education", label: "Add Education", icon: FiBook },
+            { href: "/admin/projects", label: "Add Project", icon: FiFolder },
+          ].map((action) => {
+            const Icon = action.icon;
+            return (
+              <a
+                key={action.href}
+                href={action.href}
+                className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-lg transition-all hover:bg-purple-600/10 hover:border-purple-600 text-gray-100 no-underline"
+              >
+                <Icon className="text-xl text-purple-600" />
+                <span className="font-medium">{action.label}</span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
