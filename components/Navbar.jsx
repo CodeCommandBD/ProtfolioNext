@@ -4,7 +4,7 @@ import React from "react";
 import styled, { useTheme } from "styled-components";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleMobileMenu } from "@/lib/redux/slices/uiSlice";
-import { MenuRounded } from "@mui/icons-material";
+import { FiMenu } from "react-icons/fi";
 import ThemeToggle from "./ThemeToggle";
 
 const Nav = styled.div`
@@ -143,7 +143,7 @@ const Navbar = ({ bio }) => {
           {bio?.name?.split(" ")[0] || "PORTFOLIO"}
         </NavLogo>
         <MobileIcon onClick={() => dispatch(toggleMobileMenu())}>
-          <MenuRounded style={{ color: "inherit" }} />
+          <FiMenu style={{ color: "inherit", fontSize: "1.8rem" }} />
         </MobileIcon>
 
         <NavItems>
