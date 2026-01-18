@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { sendContactEmail } from "@/lib/nodemailer";
 import { z } from "zod";
 import { rateLimit } from "@/lib/limiter";
+import dbConnect from "@/lib/db/mongoose";
+import Message from "@/lib/db/models/Message";
 
 // Validation schema
 const contactSchema = z.object({
@@ -19,7 +21,7 @@ export async function POST(request) {
     if (!isAllowed) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -27,6 +29,10 @@ export async function POST(request) {
 
     // Validate input
     const validatedData = contactSchema.parse(body);
+
+    // Save to Database
+    await dbConnect();
+    await Message.create(validatedData);
 
     // Send email
     const result = await sendContactEmail(validatedData);
@@ -43,14 +49,14 @@ export async function POST(request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     console.error("Contact form error:", error);
     return NextResponse.json(
       { error: "Failed to send email" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

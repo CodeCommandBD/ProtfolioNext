@@ -1,7 +1,10 @@
+// Force sidebar update
+// Force sidebar update
 "use client";
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   FiHome,
   FiUser,
@@ -11,6 +14,7 @@ import {
   FiFolder,
   FiMenu,
   FiX,
+  FiMail,
 } from "react-icons/fi";
 
 const menuItems = [
@@ -19,11 +23,32 @@ const menuItems = [
   { href: "/admin/skills", icon: FiAward, label: "Skills" },
   { href: "/admin/experience", icon: FiBriefcase, label: "Experience" },
   { href: "/admin/education", icon: FiBook, label: "Education" },
+  { href: "/admin/messages", icon: FiMail, label: "Messages" },
   { href: "/admin/projects", icon: FiFolder, label: "Projects" },
 ];
 
 export default function AdminSidebar({ isOpen, setIsOpen }) {
   const pathname = usePathname();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await fetch("/api/admin/messages/unread");
+        const data = await res.json();
+        setUnreadCount(data.count || 0);
+      } catch (error) {
+        console.error("Failed to fetch unread count");
+      }
+    };
+
+    // Initial fetch
+    fetchUnreadCount();
+
+    // Poll every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -55,13 +80,14 @@ export default function AdminSidebar({ isOpen, setIsOpen }) {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
+            const isMessageLink = item.label === "Messages";
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 px-6 py-3 transition-all duration-200 border-l-[3px] group
+                className={`flex items-center gap-3 px-6 py-3 transition-all duration-200 border-l-[3px] group relative
                   ${
                     isActive
                       ? "text-purple-600 bg-purple-600/10 border-l-purple-600"
@@ -69,8 +95,20 @@ export default function AdminSidebar({ isOpen, setIsOpen }) {
                   }
                 `}
               >
-                <Icon className="text-xl transition-transform group-hover:scale-110" />
+                <div className="relative">
+                  <Icon className="text-xl transition-transform group-hover:scale-110" />
+                  {isMessageLink && unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full animate-pulse shadow-lg shadow-red-500/50">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
                 <span className="font-medium">{item.label}</span>
+                {isMessageLink && unreadCount > 0 && (
+                  <span className="ml-auto bg-red-500/10 text-red-500 text-xs py-0.5 px-2 rounded-full border border-red-500/20">
+                    {unreadCount} new
+                  </span>
+                )}
               </Link>
             );
           })}
