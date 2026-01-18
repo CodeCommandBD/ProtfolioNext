@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from "react-icons/fi";
+import Modal from "@/components/Modal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,6 +21,17 @@ export default function EducationManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+    confirmText: "OK",
+    showCancel: false,
+  });
 
   const {
     register,
@@ -85,34 +97,70 @@ export default function EducationManagementPage() {
       if (response.ok) {
         await fetchEducation();
         handleCloseModal();
+        setModalConfig({
+          isOpen: true,
+          title: "Success",
+          message: editingItem
+            ? "Education updated successfully!"
+            : "Education added successfully!",
+          type: "success",
+        });
       } else {
-        alert("Failed to save education");
+        throw new Error("Failed to save");
       }
     } catch (error) {
       console.error("Error saving education:", error);
-      alert("Failed to save education");
+      setModalConfig({
+        isOpen: true,
+        title: "Error",
+        message: "Failed to save education entry. Please try again.",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this education entry?"))
-      return;
+    setModalConfig({
+      isOpen: true,
+      title: "Delete Education",
+      message:
+        "Are you sure you want to delete this education entry? This action cannot be undone.",
+      type: "warning",
+      showCancel: true,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/education/${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            await fetchEducation();
+            setModalConfig({
+              isOpen: true,
+              title: "Success",
+              message: "Education deleted successfully!",
+              type: "success",
+            });
+          } else {
+            throw new Error("Failed to delete");
+          }
+        } catch (error) {
+          console.error("Error deleting education:", error);
+          setModalConfig({
+            isOpen: true,
+            title: "Error",
+            message: "Failed to delete education entry.",
+            type: "error",
+          });
+        }
+      },
+    });
+  };
 
-    try {
-      const response = await fetch(`/api/education/${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        await fetchEducation();
-      } else {
-        alert("Failed to delete education");
-      }
-    } catch (error) {
-      console.error("Error deleting education:", error);
-      alert("Failed to delete education");
-    }
+  const closeGlobalModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
   };
 
   return (
@@ -304,6 +352,17 @@ export default function EducationManagementPage() {
           </div>
         </div>
       )}
+      {/* Global Message Modal */}
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeGlobalModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+        confirmText={modalConfig.confirmText}
+        showCancel={modalConfig.showCancel}
+      />
     </div>
   );
 }

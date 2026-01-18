@@ -9,6 +9,7 @@ import {
   FiX,
   FiExternalLink,
 } from "react-icons/fi";
+import Modal from "@/components/Modal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,6 +32,17 @@ export default function ProjectsManagementPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [currentTags, setCurrentTags] = useState([]);
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+    confirmText: "OK",
+    showCancel: false,
+  });
 
   const {
     register,
@@ -118,33 +130,70 @@ export default function ProjectsManagementPage() {
       if (response.ok) {
         await fetchProjects();
         handleCloseModal();
+        setModalConfig({
+          isOpen: true,
+          title: "Success",
+          message: editingProject
+            ? "Project updated successfully!"
+            : "Project added successfully!",
+          type: "success",
+        });
       } else {
-        alert("Failed to save project");
+        throw new Error("Failed to save");
       }
     } catch (error) {
       console.error("Error saving project:", error);
-      alert("Failed to save project");
+      setModalConfig({
+        isOpen: true,
+        title: "Error",
+        message: "Failed to save project. Please try again.",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this project?")) return;
+    setModalConfig({
+      isOpen: true,
+      title: "Delete Project",
+      message:
+        "Are you sure you want to delete this project? This action cannot be undone.",
+      type: "warning",
+      showCancel: true,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/projects/${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            await fetchProjects();
+            setModalConfig({
+              isOpen: true,
+              title: "Success",
+              message: "Project deleted successfully!",
+              type: "success",
+            });
+          } else {
+            throw new Error("Failed to delete");
+          }
+        } catch (error) {
+          console.error("Error deleting project:", error);
+          setModalConfig({
+            isOpen: true,
+            title: "Error",
+            message: "Failed to delete project.",
+            type: "error",
+          });
+        }
+      },
+    });
+  };
 
-    try {
-      const response = await fetch(`/api/projects/${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        await fetchProjects();
-      } else {
-        alert("Failed to delete project");
-      }
-    } catch (error) {
-      console.error("Error deleting project:", error);
-      alert("Failed to delete project");
-    }
+  const closeGlobalModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
   };
 
   return (
@@ -486,6 +535,17 @@ export default function ProjectsManagementPage() {
           </div>
         </div>
       )}
+      {/* Global Message Modal */}
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeGlobalModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+        confirmText={modalConfig.confirmText}
+        showCancel={modalConfig.showCancel}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from "react-icons/fi";
+import Modal from "@/components/Modal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,6 +24,17 @@ export default function ExperienceManagementPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [skillInput, setSkillInput] = useState("");
   const [currentSkills, setCurrentSkills] = useState([]);
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+    confirmText: "OK",
+    showCancel: false,
+  });
 
   const {
     register,
@@ -109,33 +121,70 @@ export default function ExperienceManagementPage() {
       if (response.ok) {
         await fetchExperiences();
         handleCloseModal();
+        setModalConfig({
+          isOpen: true,
+          title: "Success",
+          message: editingExp
+            ? "Experience updated successfully!"
+            : "Experience added successfully!",
+          type: "success",
+        });
       } else {
-        alert("Failed to save experience");
+        throw new Error("Failed to save");
       }
     } catch (error) {
       console.error("Error saving experience:", error);
-      alert("Failed to save experience");
+      setModalConfig({
+        isOpen: true,
+        title: "Error",
+        message: "Failed to save experience. Please try again.",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this experience?")) return;
+    setModalConfig({
+      isOpen: true,
+      title: "Delete Experience",
+      message:
+        "Are you sure you want to delete this experience? This action cannot be undone.",
+      type: "warning",
+      showCancel: true,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/experience/${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            await fetchExperiences();
+            setModalConfig({
+              isOpen: true,
+              title: "Success",
+              message: "Experience deleted successfully!",
+              type: "success",
+            });
+          } else {
+            throw new Error("Failed to delete");
+          }
+        } catch (error) {
+          console.error("Error deleting experience:", error);
+          setModalConfig({
+            isOpen: true,
+            title: "Error",
+            message: "Failed to delete experience.",
+            type: "error",
+          });
+        }
+      },
+    });
+  };
 
-    try {
-      const response = await fetch(`/api/experience/${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        await fetchExperiences();
-      } else {
-        alert("Failed to delete experience");
-      }
-    } catch (error) {
-      console.error("Error deleting experience:", error);
-      alert("Failed to delete experience");
-    }
+  const closeGlobalModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
   };
 
   return (
@@ -386,6 +435,17 @@ export default function ExperienceManagementPage() {
           </div>
         </div>
       )}
+      {/* Global Message Modal */}
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeGlobalModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+        confirmText={modalConfig.confirmText}
+        showCancel={modalConfig.showCancel}
+      />
     </div>
   );
 }

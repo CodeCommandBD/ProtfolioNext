@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from "react-icons/fi";
+import Modal from "@/components/Modal";
 
 export default function SkillsManagementPage() {
   const [skillCategories, setSkillCategories] = useState([]);
@@ -13,6 +14,17 @@ export default function SkillsManagementPage() {
     order: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+    confirmText: "OK",
+    showCancel: false,
+  });
 
   useEffect(() => {
     fetchSkills();
@@ -87,32 +99,70 @@ export default function SkillsManagementPage() {
       if (response.ok) {
         await fetchSkills();
         handleCloseModal();
+        setModalConfig({
+          isOpen: true,
+          title: "Success",
+          message: editingCategory
+            ? "Skill category updated successfully!"
+            : "Skill category added successfully!",
+          type: "success",
+        });
       } else {
-        alert("Failed to save skill category");
+        throw new Error("Failed to save");
       }
     } catch (error) {
       console.error("Error saving skill category:", error);
-      alert("Failed to save skill category");
+      setModalConfig({
+        isOpen: true,
+        title: "Error",
+        message: "Failed to save skill category. Please try again.",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this skill category?"))
-      return;
+    setModalConfig({
+      isOpen: true,
+      title: "Delete Skill Category",
+      message:
+        "Are you sure you want to delete this skill category? This action cannot be undone.",
+      type: "warning",
+      showCancel: true,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/skills/${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            await fetchSkills();
+            setModalConfig({
+              isOpen: true,
+              title: "Success",
+              message: "Skill category deleted successfully!",
+              type: "success",
+            });
+          } else {
+            throw new Error("Failed to delete");
+          }
+        } catch (error) {
+          console.error("Error deleting skill category:", error);
+          setModalConfig({
+            isOpen: true,
+            title: "Error",
+            message: "Failed to delete skill category.",
+            type: "error",
+          });
+        }
+      },
+    });
+  };
 
-    try {
-      const response = await fetch(`/api/skills/${id}`, { method: "DELETE" });
-      if (response.ok) {
-        await fetchSkills();
-      } else {
-        alert("Failed to delete skill category");
-      }
-    } catch (error) {
-      console.error("Error deleting skill category:", error);
-      alert("Failed to delete skill category");
-    }
+  const closeGlobalModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
   };
 
   return (
@@ -248,7 +298,7 @@ export default function SkillsManagementPage() {
                             handleSkillChange(
                               index,
                               "percentage",
-                              parseInt(e.target.value)
+                              parseInt(e.target.value),
                             )
                           }
                           placeholder="%"
@@ -290,6 +340,17 @@ export default function SkillsManagementPage() {
           </div>
         </div>
       )}
+      {/* Global Message Modal */}
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeGlobalModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+        confirmText={modalConfig.confirmText}
+        showCancel={modalConfig.showCancel}
+      />
     </div>
   );
 }

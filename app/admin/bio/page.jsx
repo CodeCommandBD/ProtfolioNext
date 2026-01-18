@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FiUpload, FiSave, FiX } from "react-icons/fi";
+import Modal from "@/components/Modal";
 
 const bioSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -25,6 +26,14 @@ export default function BioManagementPage() {
   const [currentRoles, setCurrentRoles] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
 
   const {
     register,
@@ -95,7 +104,7 @@ export default function BioManagementPage() {
         {
           method: "POST",
           body: formData,
-        }
+        },
       );
       const data = await response.json();
       return data.secure_url;
@@ -123,27 +132,39 @@ export default function BioManagementPage() {
         img: imageUrl,
       };
 
-      const url = bio ? `/api/bio/${bio._id}` : "/api/bio";
-      const method = bio ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
+      // Always use PUT /api/bio for both create and update
+      const response = await fetch("/api/bio", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bioData),
       });
 
       if (response.ok) {
         await fetchBio();
-        alert("Bio saved successfully!");
+        setModalConfig({
+          isOpen: true,
+          title: "Success!",
+          message: "Your bio has been updated successfully.",
+          type: "success",
+        });
       } else {
-        alert("Failed to save bio");
+        throw new Error("Failed to save");
       }
     } catch (error) {
       console.error("Error saving bio:", error);
-      alert("Failed to save bio");
+      setModalConfig({
+        isOpen: true,
+        title: "Error",
+        message: "Failed to save bio changes. Please try again.",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const closeModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
   };
 
   return (
@@ -374,6 +395,14 @@ export default function BioManagementPage() {
           </button>
         </div>
       </form>
+
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   );
 }
