@@ -30,8 +30,10 @@ const menuItems = [
 export default function AdminSidebar({ isOpen, setIsOpen }) {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const fetchUnreadCount = async () => {
       try {
         const res = await fetch("/api/admin/messages/unread");
@@ -97,15 +99,17 @@ export default function AdminSidebar({ isOpen, setIsOpen }) {
               >
                 <div className="relative">
                   <Icon className="text-xl transition-transform group-hover:scale-110" />
-                  {isMessageLink && unreadCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full animate-pulse shadow-lg shadow-red-500/50">
+                  {isMounted && isMessageLink && (
+                    <span
+                      className={`absolute -top-2 -right-2 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-lg ${unreadCount > 0 ? "bg-green-500 animate-pulse shadow-green-500/50" : "bg-gray-600"}`}
+                    >
                       {unreadCount}
                     </span>
                   )}
                 </div>
                 <span className="font-medium">{item.label}</span>
-                {isMessageLink && unreadCount > 0 && (
-                  <span className="ml-auto bg-red-500/10 text-red-500 text-xs py-0.5 px-2 rounded-full border border-red-500/20">
+                {isMounted && isMessageLink && unreadCount > 0 && (
+                  <span className="ml-auto bg-green-500/10 text-green-500 text-xs py-0.5 px-2 rounded-full border border-green-500/20">
                     {unreadCount} new
                   </span>
                 )}
