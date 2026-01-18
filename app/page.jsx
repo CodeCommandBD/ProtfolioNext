@@ -13,18 +13,24 @@ import AnimatedSection from "@/components/AnimatedSection";
 import ScrollToTop from "@/components/ScrollToTop";
 import PageLoader from "@/components/PageLoader";
 import StructuredData from "@/components/StructuredData";
+import dbConnect from "@/lib/db/mongoose";
+import Bio from "@/lib/db/models/Bio";
+import Skill from "@/lib/db/models/Skill";
+import ExperienceModel from "@/lib/db/models/Experience";
+import EducationModel from "@/lib/db/models/Education";
+import Project from "@/lib/db/models/Project";
 
-// Fetch data on server side
+// Ensure dynamic rendering for instant updates
+export const dynamic = "force-dynamic";
+
+// Helper to serialize Mongoose documents
+const toJSON = (data) => JSON.parse(JSON.stringify(data));
+
 async function getBioData() {
   try {
-    const res = await fetch(
-      `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/bio`,
-      {
-        next: { revalidate: 60 }, // Cache for 1 minute
-      }
-    );
-    if (!res.ok) return null;
-    return res.json();
+    await dbConnect();
+    const bio = await Bio.findOne().lean();
+    return bio ? toJSON(bio) : null;
   } catch (error) {
     console.error("Error fetching bio:", error);
     return null;
@@ -33,14 +39,9 @@ async function getBioData() {
 
 async function getSkillsData() {
   try {
-    const res = await fetch(
-      `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/skills`,
-      {
-        next: { revalidate: 60 },
-      }
-    );
-    if (!res.ok) return [];
-    return res.json();
+    await dbConnect();
+    const skills = await Skill.find().sort({ order: 1 }).lean();
+    return skills ? toJSON(skills) : [];
   } catch (error) {
     console.error("Error fetching skills:", error);
     return [];
@@ -49,14 +50,9 @@ async function getSkillsData() {
 
 async function getExperienceData() {
   try {
-    const res = await fetch(
-      `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/experience`,
-      {
-        next: { revalidate: 60 },
-      }
-    );
-    if (!res.ok) return [];
-    return res.json();
+    await dbConnect();
+    const experiences = await ExperienceModel.find().sort({ date: -1 }).lean(); // Assuming date sort desired
+    return experiences ? toJSON(experiences) : [];
   } catch (error) {
     console.error("Error fetching experience:", error);
     return [];
@@ -65,14 +61,9 @@ async function getExperienceData() {
 
 async function getEducationData() {
   try {
-    const res = await fetch(
-      `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/education`,
-      {
-        next: { revalidate: 60 },
-      }
-    );
-    if (!res.ok) return [];
-    return res.json();
+    await dbConnect();
+    const education = await EducationModel.find().sort({ order: 1 }).lean();
+    return education ? toJSON(education) : [];
   } catch (error) {
     console.error("Error fetching education:", error);
     return [];
@@ -81,14 +72,9 @@ async function getEducationData() {
 
 async function getProjectsData() {
   try {
-    const res = await fetch(
-      `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/projects`,
-      {
-        next: { revalidate: 60 },
-      }
-    );
-    if (!res.ok) return [];
-    return res.json();
+    await dbConnect();
+    const projects = await Project.find().sort({ date: -1 }).lean(); // Assuming date sort desired
+    return projects ? toJSON(projects) : [];
   } catch (error) {
     console.error("Error fetching projects:", error);
     return [];
@@ -96,7 +82,7 @@ async function getProjectsData() {
 }
 
 export default async function Home() {
-  // Fetch all data on server side
+  // Fetch all data directly from DB
   const [bio, skills, experiences, education, projects] = await Promise.all([
     getBioData(),
     getSkillsData(),

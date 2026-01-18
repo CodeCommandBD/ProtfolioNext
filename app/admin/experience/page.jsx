@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from "react-icons/fi";
-import Modal from "@/components/Modal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDispatch } from "react-redux";
+import api from "@/lib/axios";
+import { openModal } from "@/lib/redux/slices/modalSlice";
+import PageLoader from "@/components/PageLoader";
 
 const experienceSchema = z.object({
   role: z.string().min(1, "Role is required"),
@@ -18,23 +22,12 @@ const experienceSchema = z.object({
 });
 
 export default function ExperienceManagementPage() {
-  const [experiences, setExperiences] = useState([]);
+  const queryClient = useQueryClient();
+  const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExp, setEditingExp] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [skillInput, setSkillInput] = useState("");
   const [currentSkills, setCurrentSkills] = useState([]);
-
-  // Modal State
-  const [modalConfig, setModalConfig] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    type: "info",
-    onConfirm: null,
-    confirmText: "OK",
-    showCancel: false,
-  });
 
   const {
     register,
@@ -46,19 +39,71 @@ export default function ExperienceManagementPage() {
     resolver: zodResolver(experienceSchema),
   });
 
-  useEffect(() => {
-    fetchExperiences();
-  }, []);
+  // Fetch Experience Data
+  const { data: experiences, isLoading } = useQuery({
+    queryKey: ["experience"],
+    queryFn: async () => {
+      const { data } = await api.get("/experience");
+      return data || [];
+    },
+  });
 
-  const fetchExperiences = async () => {
-    try {
-      const response = await fetch("/api/experience");
-      const data = await response.json();
-      setExperiences(data);
-    } catch (error) {
-      console.error("Error fetching experiences:", error);
-    }
-  };
+  // Save Mutation
+  const saveMutation = useMutation({
+    mutationFn: async (data) => {
+      const url = editingExp ? `/experience/${editingExp._id}` : "/experience";
+      const method = editingExp ? "put" : "post";
+      return api[method](url, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["experience"]);
+      handleCloseModal();
+      dispatch(
+        openModal({
+          title: "Success",
+          message: editingExp
+            ? "Experience updated successfully!"
+            : "Experience added successfully!",
+          type: "success",
+        }),
+      );
+    },
+    onError: (error) => {
+      dispatch(
+        openModal({
+          title: "Error",
+          message: error.message || "Failed to save experience.",
+          type: "error",
+        }),
+      );
+    },
+  });
+
+  // Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      return api.delete(`/experience/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["experience"]);
+      dispatch(
+        openModal({
+          title: "Success",
+          message: "Experience deleted successfully!",
+          type: "success",
+        }),
+      );
+    },
+    onError: (error) => {
+      dispatch(
+        openModal({
+          title: "Error",
+          message: error.message || "Failed to delete experience.",
+          type: "error",
+        }),
+      );
+    },
+  });
 
   const handleOpenModal = (exp) => {
     if (exp) {
@@ -104,88 +149,23 @@ export default function ExperienceManagementPage() {
     setValue("skills", newSkills);
   };
 
-  const onSubmit = async (data) => {
-    setIsLoading(true);
-    try {
-      const url = editingExp
-        ? `/api/experience/${editingExp._id}`
-        : "/api/experience";
-      const method = editingExp ? "PUT" : "POST";
+  const onSubmit = (data) => {
+    saveMutation.mutate({ ...data, skills: currentSkills });
+  };
 
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, skills: currentSkills }),
-      });
-
-      if (response.ok) {
-        await fetchExperiences();
-        handleCloseModal();
-        setModalConfig({
-          isOpen: true,
-          title: "Success",
-          message: editingExp
-            ? "Experience updated successfully!"
-            : "Experience added successfully!",
-          type: "success",
-        });
-      } else {
-        throw new Error("Failed to save");
-      }
-    } catch (error) {
-      console.error("Error saving experience:", error);
-      setModalConfig({
-        isOpen: true,
-        title: "Error",
-        message: "Failed to save experience. Please try again.",
-        type: "error",
-      });
-    } finally {
-      setIsLoading(false);
+  const handleDelete = (id) => {
+    if (window.confirm("Are you sure you want to delete this experience?")) {
+      deleteMutation.mutate(id);
     }
   };
 
-  const handleDelete = async (id) => {
-    setModalConfig({
-      isOpen: true,
-      title: "Delete Experience",
-      message:
-        "Are you sure you want to delete this experience? This action cannot be undone.",
-      type: "warning",
-      showCancel: true,
-      confirmText: "Delete",
-      onConfirm: async () => {
-        try {
-          const response = await fetch(`/api/experience/${id}`, {
-            method: "DELETE",
-          });
-          if (response.ok) {
-            await fetchExperiences();
-            setModalConfig({
-              isOpen: true,
-              title: "Success",
-              message: "Experience deleted successfully!",
-              type: "success",
-            });
-          } else {
-            throw new Error("Failed to delete");
-          }
-        } catch (error) {
-          console.error("Error deleting experience:", error);
-          setModalConfig({
-            isOpen: true,
-            title: "Error",
-            message: "Failed to delete experience.",
-            type: "error",
-          });
-        }
-      },
-    });
+  const closeGlobalModal = () => {
+    // Config handled by Redux now
   };
 
-  const closeGlobalModal = () => {
-    setModalConfig((prev) => ({ ...prev, isOpen: false }));
-  };
+  if (isLoading) {
+    return <PageLoader />;
+  }
 
   return (
     <div className="max-w-[1200px]">
@@ -425,27 +405,17 @@ export default function ExperienceManagementPage() {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={saveMutation.isPending}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 border-none rounded-lg px-6 py-3.5 text-base font-semibold text-white cursor-pointer flex items-center justify-center gap-2 mt-2 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiSave />
-                {isLoading ? "Saving..." : "Save Experience"}
+                {saveMutation.isPending ? "Saving..." : "Save Experience"}
               </button>
             </form>
           </div>
         </div>
       )}
-      {/* Global Message Modal */}
-      <Modal
-        isOpen={modalConfig.isOpen}
-        onClose={closeGlobalModal}
-        title={modalConfig.title}
-        message={modalConfig.message}
-        type={modalConfig.type}
-        onConfirm={modalConfig.onConfirm}
-        confirmText={modalConfig.confirmText}
-        showCancel={modalConfig.showCancel}
-      />
+      {/* Global Message Modal is in Layout */}
     </div>
   );
 }

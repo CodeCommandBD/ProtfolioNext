@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FiUpload, FiSave, FiX } from "react-icons/fi";
-import Modal from "@/components/Modal";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDispatch } from "react-redux";
+import api from "@/lib/axios";
+import { openModal } from "@/lib/redux/slices/modalSlice";
+import PageLoader from "@/components/PageLoader";
 
 const bioSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -20,20 +24,13 @@ const bioSchema = z.object({
 });
 
 export default function BioManagementPage() {
-  const [bio, setBio] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const dispatch = useDispatch();
+  const [file, setFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [roleInput, setRoleInput] = useState("");
   const [currentRoles, setCurrentRoles] = useState([]);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState("");
-
-  // Modal State
-  const [modalConfig, setModalConfig] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    type: "info",
-  });
 
   const {
     register,
@@ -45,24 +42,58 @@ export default function BioManagementPage() {
     resolver: zodResolver(bioSchema),
   });
 
-  const fetchBio = useCallback(async () => {
-    try {
-      const response = await fetch("/api/bio");
-      const data = await response.json();
-      if (data) {
-        setBio(data);
-        setCurrentRoles(data.roles || []);
-        setImagePreview(data.img || "");
-        reset(data);
-      }
-    } catch (error) {
-      console.error("Error fetching bio:", error);
-    }
-  }, [reset]);
+  // Fetch Bio Data
+  const { data: bio, isLoading } = useQuery({
+    queryKey: ["bio"],
+    queryFn: async () => {
+      const data = await api.get("/bio");
+      return data || null;
+    },
+  });
 
+  // Update Form when data loads
   useEffect(() => {
-    fetchBio();
-  }, [fetchBio]);
+    if (bio) {
+      reset({
+        name: bio.name,
+        description: bio.description,
+        github: bio.github || "",
+        resume: bio.resume || "",
+        linkedin: bio.linkedin || "",
+        twitter: bio.twitter || "",
+        insta: bio.insta || "",
+        facebook: bio.facebook || "",
+      });
+      setCurrentRoles(bio.roles || []);
+      setImagePreview(bio.img || "");
+    }
+  }, [bio, reset]);
+
+  // Mutation for saving bio
+  const mutation = useMutation({
+    mutationFn: async (data) => {
+      return api.put("/bio", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["bio"]);
+      dispatch(
+        openModal({
+          title: "Success",
+          message: "Bio updated successfully!",
+          type: "success",
+        }),
+      );
+    },
+    onError: (error) => {
+      dispatch(
+        openModal({
+          title: "Error",
+          message: error.message || "Failed to save bio.",
+          type: "error",
+        }),
+      );
+    },
+  });
 
   const handleAddRole = () => {
     if (roleInput.trim() && !currentRoles.includes(roleInput.trim())) {
@@ -80,95 +111,76 @@ export default function BioManagementPage() {
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(selectedFile);
     }
   };
 
   const handleImageUpload = async () => {
-    if (!imageFile) return null;
+    if (!file) return null;
 
+    setIsUploading(true);
     const formData = new FormData();
-    formData.append("file", imageFile);
+    formData.append("file", file);
     formData.append("upload_preset", "portfolio");
 
     try {
-      const response = await fetch(
+      const res = await fetch(
         `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
         {
           method: "POST",
           body: formData,
         },
       );
-      const data = await response.json();
+      const data = await res.json();
       return data.secure_url;
     } catch (error) {
       console.error("Error uploading image:", error);
+      dispatch(
+        openModal({
+          title: "Upload Error",
+          message: "Failed to upload image. Please try again.",
+          type: "error",
+        }),
+      );
       return null;
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    try {
-      let imageUrl = bio?.img || "";
+    let imageUrl = bio?.img || "";
 
-      if (imageFile) {
-        const uploadedUrl = await handleImageUpload();
-        if (uploadedUrl) {
-          imageUrl = uploadedUrl;
-        }
-      }
-
-      const bioData = {
-        ...data,
-        roles: currentRoles,
-        img: imageUrl,
-      };
-
-      // Always use PUT /api/bio for both create and update
-      const response = await fetch("/api/bio", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bioData),
-      });
-
-      if (response.ok) {
-        await fetchBio();
-        setModalConfig({
-          isOpen: true,
-          title: "Success!",
-          message: "Your bio has been updated successfully.",
-          type: "success",
-        });
+    if (file) {
+      const uploadedUrl = await handleImageUpload();
+      if (uploadedUrl) {
+        imageUrl = uploadedUrl;
       } else {
-        throw new Error("Failed to save");
+        // If image upload failed, stop the submission
+        return;
       }
-    } catch (error) {
-      console.error("Error saving bio:", error);
-      setModalConfig({
-        isOpen: true,
-        title: "Error",
-        message: "Failed to save bio changes. Please try again.",
-        type: "error",
-      });
-    } finally {
-      setIsLoading(false);
     }
+
+    const bioData = {
+      ...data,
+      roles: currentRoles,
+      img: imageUrl,
+    };
+
+    mutation.mutate(bioData);
   };
 
-  const closeModal = () => {
-    setModalConfig((prev) => ({ ...prev, isOpen: false }));
-  };
+  if (isLoading) return <PageLoader />;
 
   return (
-    <div className="max-w-[900px]">
+    <div className="max-w-[1000px]">
       <h1 className="text-3xl font-bold text-gray-100 mb-2">
         Bio / Profile Management
       </h1>
@@ -387,22 +399,14 @@ export default function BioManagementPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={mutation.isPending || isUploading}
             className="bg-gradient-to-r from-purple-600 to-pink-600 border-none rounded-lg px-6 py-3.5 text-base font-semibold text-white cursor-pointer flex items-center justify-center gap-2 mt-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FiSave />
-            {isLoading ? "Saving..." : "Save Profile"}
+            {mutation.isPending || isUploading ? "Saving..." : "Save Profile"}
           </button>
         </div>
       </form>
-
-      <Modal
-        isOpen={modalConfig.isOpen}
-        onClose={closeModal}
-        title={modalConfig.title}
-        message={modalConfig.message}
-        type={modalConfig.type}
-      />
     </div>
   );
 }

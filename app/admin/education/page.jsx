@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from "react-icons/fi";
-import Modal from "@/components/Modal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDispatch } from "react-redux";
+import api from "@/lib/axios";
+import { openModal } from "@/lib/redux/slices/modalSlice";
+import PageLoader from "@/components/PageLoader";
 
 const educationSchema = z.object({
   school: z.string().min(1, "School name is required"),
@@ -17,21 +21,10 @@ const educationSchema = z.object({
 });
 
 export default function EducationManagementPage() {
-  const [educationList, setEducationList] = useState([]);
+  const queryClient = useQueryClient();
+  const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Modal State
-  const [modalConfig, setModalConfig] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    type: "info",
-    onConfirm: null,
-    confirmText: "OK",
-    showCancel: false,
-  });
 
   const {
     register,
@@ -42,19 +35,71 @@ export default function EducationManagementPage() {
     resolver: zodResolver(educationSchema),
   });
 
-  useEffect(() => {
-    fetchEducation();
-  }, []);
+  // Fetch Education Data
+  const { data: education, isLoading } = useQuery({
+    queryKey: ["education"],
+    queryFn: async () => {
+      const { data } = await api.get("/education");
+      return data || [];
+    },
+  });
 
-  const fetchEducation = async () => {
-    try {
-      const response = await fetch("/api/education");
-      const data = await response.json();
-      setEducationList(data);
-    } catch (error) {
-      console.error("Error fetching education:", error);
-    }
-  };
+  // Save Mutation
+  const saveMutation = useMutation({
+    mutationFn: async (data) => {
+      const url = editingItem ? `/education/${editingItem._id}` : "/education";
+      const method = editingItem ? "put" : "post";
+      return api[method](url, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["education"]);
+      handleCloseModal();
+      dispatch(
+        openModal({
+          title: "Success",
+          message: editingItem
+            ? "Education updated successfully!"
+            : "Education added successfully!",
+          type: "success",
+        }),
+      );
+    },
+    onError: (error) => {
+      dispatch(
+        openModal({
+          title: "Error",
+          message: error.message || "Failed to save education.",
+          type: "error",
+        }),
+      );
+    },
+  });
+
+  // Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      return api.delete(`/education/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["education"]);
+      dispatch(
+        openModal({
+          title: "Success",
+          message: "Education deleted successfully!",
+          type: "success",
+        }),
+      );
+    },
+    onError: (error) => {
+      dispatch(
+        openModal({
+          title: "Error",
+          message: error.message || "Failed to delete education.",
+          type: "error",
+        }),
+      );
+    },
+  });
 
   const handleOpenModal = (item) => {
     if (item) {
@@ -80,88 +125,21 @@ export default function EducationManagementPage() {
     reset();
   };
 
-  const onSubmit = async (data) => {
-    setIsLoading(true);
-    try {
-      const url = editingItem
-        ? `/api/education/${editingItem._id}`
-        : "/api/education";
-      const method = editingItem ? "PUT" : "POST";
+  const onSubmit = (data) => {
+    saveMutation.mutate(data);
+  };
 
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        await fetchEducation();
-        handleCloseModal();
-        setModalConfig({
-          isOpen: true,
-          title: "Success",
-          message: editingItem
-            ? "Education updated successfully!"
-            : "Education added successfully!",
-          type: "success",
-        });
-      } else {
-        throw new Error("Failed to save");
-      }
-    } catch (error) {
-      console.error("Error saving education:", error);
-      setModalConfig({
-        isOpen: true,
-        title: "Error",
-        message: "Failed to save education entry. Please try again.",
-        type: "error",
-      });
-    } finally {
-      setIsLoading(false);
+  const handleDelete = (id) => {
+    if (
+      window.confirm("Are you sure you want to delete this education entry?")
+    ) {
+      deleteMutation.mutate(id);
     }
   };
 
-  const handleDelete = async (id) => {
-    setModalConfig({
-      isOpen: true,
-      title: "Delete Education",
-      message:
-        "Are you sure you want to delete this education entry? This action cannot be undone.",
-      type: "warning",
-      showCancel: true,
-      confirmText: "Delete",
-      onConfirm: async () => {
-        try {
-          const response = await fetch(`/api/education/${id}`, {
-            method: "DELETE",
-          });
-          if (response.ok) {
-            await fetchEducation();
-            setModalConfig({
-              isOpen: true,
-              title: "Success",
-              message: "Education deleted successfully!",
-              type: "success",
-            });
-          } else {
-            throw new Error("Failed to delete");
-          }
-        } catch (error) {
-          console.error("Error deleting education:", error);
-          setModalConfig({
-            isOpen: true,
-            title: "Error",
-            message: "Failed to delete education entry.",
-            type: "error",
-          });
-        }
-      },
-    });
-  };
-
-  const closeGlobalModal = () => {
-    setModalConfig((prev) => ({ ...prev, isOpen: false }));
-  };
+  if (isLoading) {
+    return <PageLoader />;
+  }
 
   return (
     <div className="max-w-[1200px]">
@@ -179,7 +157,7 @@ export default function EducationManagementPage() {
       </div>
 
       <div className="grid gap-6">
-        {educationList.map((item) => (
+        {education?.map((item) => (
           <div
             key={item._id}
             className="bg-[#0f0f14] border border-white/10 rounded-xl p-6 flex gap-5"
@@ -342,27 +320,17 @@ export default function EducationManagementPage() {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={saveMutation.isPending}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 border-none rounded-lg px-6 py-3.5 text-base font-semibold text-white cursor-pointer flex items-center justify-center gap-2 mt-2 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiSave />
-                {isLoading ? "Saving..." : "Save Education"}
+                {saveMutation.isPending ? "Saving..." : "Save Education"}
               </button>
             </form>
           </div>
         </div>
       )}
-      {/* Global Message Modal */}
-      <Modal
-        isOpen={modalConfig.isOpen}
-        onClose={closeGlobalModal}
-        title={modalConfig.title}
-        message={modalConfig.message}
-        type={modalConfig.type}
-        onConfirm={modalConfig.onConfirm}
-        confirmText={modalConfig.confirmText}
-        showCancel={modalConfig.showCancel}
-      />
+      {/* Global Message Modal is in Layout */}
     </div>
   );
 }

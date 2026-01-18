@@ -1,356 +1,452 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from "react-icons/fi";
-import Modal from "@/components/Modal";
+import {
+  FiPlus,
+  FiTrash2,
+  FiSave,
+  FiX,
+  FiCheck,
+  FiEdit2,
+} from "react-icons/fi";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDispatch } from "react-redux";
+import api from "@/lib/axios";
+import { openModal } from "@/lib/redux/slices/modalSlice";
+import PageLoader from "@/components/PageLoader";
+
+// Schema for a single skill item
+const skillItemSchema = z.object({
+  name: z.string().min(1, "Skill name is required"),
+  image: z.string().url("Must be a valid URL").min(1, "Image URL is required"),
+  percentage: z.number().min(0).max(100).optional().default(50),
+});
 
 export default function SkillsManagementPage() {
-  const [skillCategories, setSkillCategories] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    skills: [{ name: "", image: "", percentage: 50 }],
-    order: 0,
+  const queryClient = useQueryClient();
+  const dispatch = useDispatch();
+
+  // UI State
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
+
+  const [activeCategory, setActiveCategory] = useState(null); // Category being edited or added to
+  const [editingSkillIndex, setEditingSkillIndex] = useState(null); // Index of skill being edited inside activeCategory
+
+  const [newCategoryTitle, setNewCategoryTitle] = useState("");
+  const [editingCategory, setEditingCategory] = useState(null); // For renaming category
+
+  // Form for Skill Item
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(skillItemSchema),
+    defaultValues: { name: "", image: "", percentage: 50 },
   });
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Modal State
-  const [modalConfig, setModalConfig] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    type: "info",
-    onConfirm: null,
-    confirmText: "OK",
-    showCancel: false,
+  // --- QUERIES ---
+
+  // Fetch All Categories (which include their skills)
+  const { data: categories = [], isLoading } = useQuery({
+    queryKey: ["skills"],
+    queryFn: async () => {
+      const data = await api.get("/skills");
+      return data || [];
+    },
   });
 
-  useEffect(() => {
-    fetchSkills();
-  }, []);
+  // --- MUTATIONS ---
 
-  const fetchSkills = async () => {
-    try {
-      const response = await fetch("/api/skills");
-      const data = await response.json();
-      setSkillCategories(data);
-    } catch (error) {
-      console.error("Error fetching skills:", error);
-    }
-  };
-
-  const handleOpenModal = (category) => {
-    if (category) {
-      setEditingCategory(category);
-      setFormData(category);
-    } else {
-      setEditingCategory(null);
-      setFormData({
-        title: "",
-        skills: [{ name: "", image: "", percentage: 50 }],
-        order: skillCategories.length,
+  // 1. Create Category
+  const createCategoryMutation = useMutation({
+    mutationFn: async (title) => {
+      return api.post("/skills", {
+        title,
+        skills: [],
+        order: categories.length,
       });
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingCategory(null);
-  };
-
-  const handleAddSkill = () => {
-    setFormData({
-      ...formData,
-      skills: [...formData.skills, { name: "", image: "", percentage: 50 }],
-    });
-  };
-
-  const handleRemoveSkill = (index) => {
-    setFormData({
-      ...formData,
-      skills: formData.skills.filter((_, i) => i !== index),
-    });
-  };
-
-  const handleSkillChange = (index, field, value) => {
-    const newSkills = [...formData.skills];
-    newSkills[index][field] = value;
-    setFormData({ ...formData, skills: newSkills });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const url = editingCategory
-        ? `/api/skills/${editingCategory._id}`
-        : "/api/skills";
-      const method = editingCategory ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        await fetchSkills();
-        handleCloseModal();
-        setModalConfig({
-          isOpen: true,
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["skills"]);
+      setNewCategoryTitle("");
+      setIsCategoryModalOpen(false);
+      dispatch(
+        openModal({
           title: "Success",
-          message: editingCategory
-            ? "Skill category updated successfully!"
-            : "Skill category added successfully!",
+          message: "Category created!",
           type: "success",
-        });
-      } else {
-        throw new Error("Failed to save");
-      }
-    } catch (error) {
-      console.error("Error saving skill category:", error);
-      setModalConfig({
-        isOpen: true,
-        title: "Error",
-        message: "Failed to save skill category. Please try again.",
-        type: "error",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+        }),
+      );
+    },
+    onError: (err) =>
+      dispatch(
+        openModal({ title: "Error", message: err.message, type: "error" }),
+      ),
+  });
+
+  // 2. Update Category (Used for Renaming OR Updating Skills List)
+  const updateCategoryMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      return api.put(`/skills/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["skills"]);
+      setIsSkillModalOpen(false);
+      setEditingCategory(null);
+      dispatch(
+        openModal({
+          title: "Success",
+          message: "Saved successfully!",
+          type: "success",
+        }),
+      );
+    },
+    onError: (err) =>
+      dispatch(
+        openModal({ title: "Error", message: err.message, type: "error" }),
+      ),
+  });
+
+  // 3. Delete Category
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id) => {
+      return api.delete(`/skills/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["skills"]);
+      dispatch(
+        openModal({
+          title: "Success",
+          message: "Category deleted!",
+          type: "success",
+        }),
+      );
+    },
+    onError: (err) =>
+      dispatch(
+        openModal({ title: "Error", message: err.message, type: "error" }),
+      ),
+  });
+
+  // --- HANDLERS ---
+
+  // Category Handlers
+  const handleAddCategory = () => {
+    if (!newCategoryTitle.trim()) return;
+    createCategoryMutation.mutate(newCategoryTitle);
   };
 
-  const handleDelete = async (id) => {
-    setModalConfig({
-      isOpen: true,
-      title: "Delete Skill Category",
-      message:
-        "Are you sure you want to delete this skill category? This action cannot be undone.",
-      type: "warning",
-      showCancel: true,
-      confirmText: "Delete",
-      onConfirm: async () => {
-        try {
-          const response = await fetch(`/api/skills/${id}`, {
-            method: "DELETE",
-          });
-          if (response.ok) {
-            await fetchSkills();
-            setModalConfig({
-              isOpen: true,
-              title: "Success",
-              message: "Skill category deleted successfully!",
-              type: "success",
-            });
-          } else {
-            throw new Error("Failed to delete");
-          }
-        } catch (error) {
-          console.error("Error deleting skill category:", error);
-          setModalConfig({
-            isOpen: true,
-            title: "Error",
-            message: "Failed to delete skill category.",
-            type: "error",
-          });
-        }
-      },
+  const handleDeleteCategory = (id) => {
+    dispatch(
+      openModal({
+        title: "Delete Category",
+        message: "Delete this category and all its skills?",
+        type: "warning",
+        showCancel: true,
+        onConfirm: () => deleteCategoryMutation.mutate(id),
+        confirmText: "Delete",
+      }),
+    );
+  };
+
+  const handleUpdateCategoryTitle = (category) => {
+    if (!category.title.trim()) return;
+    updateCategoryMutation.mutate({
+      id: category._id,
+      data: { title: category.title },
     });
   };
 
-  const closeGlobalModal = () => {
-    setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  // Skill Handlers
+  const openAddSkillModal = (category) => {
+    setActiveCategory(category);
+    setEditingSkillIndex(null);
+    reset({ name: "", image: "", percentage: 50 });
+    setIsSkillModalOpen(true);
   };
+
+  const openEditSkillModal = (category, skill, index) => {
+    setActiveCategory(category);
+    setEditingSkillIndex(index);
+    reset(skill);
+    setIsSkillModalOpen(true);
+  };
+
+  const onSubmitSkill = (data) => {
+    if (!activeCategory) return;
+
+    let updatedSkills = [...(activeCategory.skills || [])];
+
+    if (editingSkillIndex !== null) {
+      // Edit existing
+      updatedSkills[editingSkillIndex] = data;
+    } else {
+      // Add new
+      updatedSkills.push(data);
+    }
+
+    updateCategoryMutation.mutate({
+      id: activeCategory._id,
+      data: { skills: updatedSkills },
+    });
+  };
+
+  const handleDeleteSkill = (category, index) => {
+    const updatedSkills = category.skills.filter((_, i) => i !== index);
+
+    dispatch(
+      openModal({
+        title: "Delete Skill",
+        message: "Are you sure?",
+        type: "warning",
+        showCancel: true,
+        confirmText: "Delete",
+        onConfirm: () =>
+          updateCategoryMutation.mutate({
+            id: category._id,
+            data: { skills: updatedSkills },
+          }),
+      }),
+    );
+  };
+
+  if (isLoading) return <PageLoader />;
 
   return (
     <div className="max-w-[1200px]">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-100">Skills Management</h1>
         <button
-          onClick={() => handleOpenModal()}
+          onClick={() => setIsCategoryModalOpen(true)}
           className="bg-gradient-to-r from-purple-600 to-pink-600 border-none rounded-lg px-6 py-3 text-sm font-semibold text-white cursor-pointer flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/30"
         >
           <FiPlus />
-          Add Skill Category
+          Add Category
         </button>
       </div>
 
-      <div className="grid gap-6">
-        {skillCategories.map((category) => (
+      <div className="space-y-8">
+        {categories.map((category) => (
           <div
             key={category._id}
             className="bg-[#0f0f14] border border-white/10 rounded-xl p-6"
           >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-100">
-                {category.title}
-              </h3>
+            <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+              {editingCategory === category._id ? (
+                <div className="flex gap-2 items-center">
+                  <input
+                    defaultValue={category.title}
+                    onChange={(e) => (category.tempTitle = e.target.value)}
+                    className="bg-white/5 border border-white/10 rounded px-3 py-1 text-white"
+                  />
+                  <button
+                    onClick={() =>
+                      handleUpdateCategoryTitle({
+                        ...category,
+                        title: category.tempTitle || category.title,
+                      })
+                    }
+                    className="text-green-500"
+                  >
+                    <FiCheck size={20} />
+                  </button>
+                  <button
+                    onClick={() => setEditingCategory(null)}
+                    className="text-red-500"
+                  >
+                    <FiX size={20} />
+                  </button>
+                </div>
+              ) : (
+                <h2 className="text-2xl font-bold text-gray-100">
+                  {category.title}
+                </h2>
+              )}
+
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleOpenModal(category)}
-                  className="bg-purple-600/10 border border-purple-600/30 rounded-md p-2 text-purple-600 cursor-pointer transition-all hover:bg-purple-600/20"
+                  onClick={() => openAddSkillModal(category)}
+                  className="bg-purple-600/10 border border-purple-600/30 rounded-md p-2 text-purple-600 hover:bg-purple-600/20 flex gap-2 items-center text-sm"
                 >
-                  <FiEdit2 className="text-base" />
+                  <FiPlus /> Add Skill
                 </button>
                 <button
-                  onClick={() => handleDelete(category._id)}
-                  className="bg-red-500/10 border border-red-500/30 rounded-md p-2 text-red-500 cursor-pointer transition-all hover:bg-red-500/20"
+                  onClick={() => setEditingCategory(category._id)}
+                  className="bg-blue-500/10 border border-blue-500/30 rounded-md p-2 text-blue-500 hover:bg-blue-500/20"
                 >
-                  <FiTrash2 className="text-base" />
+                  <FiEdit2 />
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(category._id)}
+                  className="bg-red-500/10 border border-red-500/30 rounded-md p-2 text-red-500 hover:bg-red-500/20"
+                >
+                  <FiTrash2 />
                 </button>
               </div>
             </div>
-            <div className="flex flex-wrap gap-3">
-              {category.skills.map((skill, index) => (
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {category.skills?.map((skill, idx) => (
                 <div
-                  key={index}
-                  className="bg-purple-600/10 border border-purple-600/30 rounded-lg px-3 py-2 flex items-center gap-2 text-sm text-gray-100"
+                  key={idx}
+                  className="bg-white/5 border border-white/5 rounded-lg p-4 flex items-center justify-between group hover:border-purple-600/30 transition-colors"
                 >
-                  <img
-                    src={skill.image}
-                    alt={skill.name}
-                    className="w-5 h-5 object-contain"
-                  />
-                  {skill.name}
-                  {skill.percentage && (
-                    <span className="text-gray-400 text-xs bg-white/10 px-1.5 py-0.5 rounded">
-                      {skill.percentage}%
-                    </span>
-                  )}
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={skill.image}
+                      alt={skill.name}
+                      className="w-10 h-10 object-contain"
+                    />
+                    <div>
+                      <h4 className="font-semibold text-gray-200">
+                        {skill.name}
+                      </h4>
+                      <div className="text-xs text-purple-400">
+                        {skill.percentage}% Proficiency
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => openEditSkillModal(category, skill, idx)}
+                      className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded"
+                    >
+                      <FiEdit2 />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSkill(category, idx)}
+                      className="p-1.5 text-red-400 hover:bg-red-500/10 rounded"
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </div>
                 </div>
               ))}
+              {(!category.skills || category.skills.length === 0) && (
+                <div className="text-gray-500 text-sm italic py-4 col-span-full text-center">
+                  No skills added yet.
+                </div>
+              )}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[1000] p-5">
-          <div className="bg-[#0f0f14] border border-white/10 rounded-xl p-8 max-w-[600px] w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-100">
-                {editingCategory ? "Edit" : "Add"} Skill Category
-              </h2>
+      {/* Add Category Modal */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1a20] p-6 rounded-xl border border-white/10 w-full max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">
+              Add New Category
+            </h3>
+            <input
+              value={newCategoryTitle}
+              onChange={(e) => setNewCategoryTitle(e.target.value)}
+              placeholder="Category Name (e.g. Frontend)"
+              className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white mb-4 focus:border-purple-500 outline-none"
+            />
+            <div className="flex justify-end gap-3">
               <button
-                onClick={handleCloseModal}
-                className="bg-none border-none text-gray-400 cursor-pointer p-1 hover:text-gray-100"
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="px-4 py-2 text-gray-400 hover:text-white"
               >
-                <FiX className="text-2xl" />
+                Cancel
+              </button>
+              <button
+                onClick={handleAddCategory}
+                disabled={createCategoryMutation.isPending}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium"
+              >
+                {createCategoryMutation.isPending ? "Creating..." : "Create"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-100">
-                  Category Title
+      {/* Add/Edit Skill Modal */}
+      {isSkillModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1a20] p-6 rounded-xl border border-white/10 w-full max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">
+              {editingSkillIndex !== null ? "Edit Skill" : "Add Skill"}
+            </h3>
+            <form
+              onSubmit={handleSubmit(onSubmitSkill)}
+              className="flex flex-col gap-4"
+            >
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">
+                  Skill Name
                 </label>
                 <input
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  placeholder="e.g., Frontend"
-                  required
-                  className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
+                  {...register("name")}
+                  className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none"
                 />
+                {errors.name && (
+                  <span className="text-red-500 text-xs">
+                    {errors.name.message}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">
+                  Icon URL
+                </label>
+                <input
+                  {...register("image")}
+                  className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none"
+                />
+                {errors.image && (
+                  <span className="text-red-500 text-xs">
+                    {errors.image.message}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">
+                  Proficiency (%)
+                </label>
+                <input
+                  type="number"
+                  {...register("percentage", { valueAsNumber: true })}
+                  className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none"
+                />
+                {errors.percentage && (
+                  <span className="text-red-500 text-xs">
+                    {errors.percentage.message}
+                  </span>
+                )}
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-100">
-                  Skills
-                </label>
-                {formData.skills.map((skill, index) => (
-                  <div key={index} className="mb-3">
-                    <div className="flex gap-2 items-end">
-                      <div className="flex-1 flex flex-col gap-2">
-                        <input
-                          value={skill.name}
-                          onChange={(e) =>
-                            handleSkillChange(index, "name", e.target.value)
-                          }
-                          placeholder="Skill name"
-                          required
-                          className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
-                        />
-                      </div>
-                      <div className="flex-1 flex flex-col gap-2">
-                        <input
-                          value={skill.image}
-                          onChange={(e) =>
-                            handleSkillChange(index, "image", e.target.value)
-                          }
-                          placeholder="Image URL"
-                          required
-                          className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
-                        />
-                      </div>
-                      <div className="flex-[0.5] flex flex-col gap-2">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={skill.percentage || 50}
-                          onChange={(e) =>
-                            handleSkillChange(
-                              index,
-                              "percentage",
-                              parseInt(e.target.value),
-                            )
-                          }
-                          placeholder="%"
-                          title="Proficiency"
-                          required
-                          className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
-                        />
-                      </div>
-                      {formData.skills.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSkill(index)}
-                          className="bg-red-500/10 border border-red-500/30 rounded-md px-4 py-3 text-red-500 text-sm cursor-pointer whitespace-nowrap hover:bg-red-500/20"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="flex justify-end gap-3 mt-2">
                 <button
                   type="button"
-                  onClick={handleAddSkill}
-                  className="bg-purple-600/10 border border-purple-600/30 rounded-md px-4 py-3 text-purple-600 text-sm cursor-pointer whitespace-nowrap hover:bg-purple-600/20"
+                  onClick={() => setIsSkillModalOpen(false)}
+                  className="px-4 py-2 text-gray-400 hover:text-white"
                 >
-                  + Add Skill
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateCategoryMutation.isPending}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium"
+                >
+                  {updateCategoryMutation.isPending
+                    ? "Saving..."
+                    : "Save Skill"}
                 </button>
               </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 border-none rounded-lg px-6 py-3.5 text-base font-semibold text-white cursor-pointer flex items-center justify-center gap-2 mt-2 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FiSave />
-                {isLoading ? "Saving..." : "Save Category"}
-              </button>
             </form>
           </div>
         </div>
       )}
-      {/* Global Message Modal */}
-      <Modal
-        isOpen={modalConfig.isOpen}
-        onClose={closeGlobalModal}
-        title={modalConfig.title}
-        message={modalConfig.message}
-        type={modalConfig.type}
-        onConfirm={modalConfig.onConfirm}
-        confirmText={modalConfig.confirmText}
-        showCancel={modalConfig.showCancel}
-      />
     </div>
   );
 }

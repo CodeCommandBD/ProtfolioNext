@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import StyledComponentsRegistry from "@/lib/registry";
 import StoreProvider from "@/components/StoreProvider";
 import QueryProvider from "@/lib/tanstack/QueryProvider";
+import GlobalModal from "@/components/ui/GlobalModal";
 
 const poppins = Poppins({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -96,7 +97,10 @@ export default function RootLayout({ children }) {
               defaultTheme="dark"
               enableSystem={false}
             >
-              <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+              <StyledComponentsRegistry>
+                {children}
+                <GlobalModal />
+              </StyledComponentsRegistry>
             </ThemeProvider>
           </QueryProvider>
         </StoreProvider>

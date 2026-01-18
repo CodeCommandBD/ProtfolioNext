@@ -7,12 +7,18 @@ import {
   FiTrash2,
   FiSave,
   FiX,
+  FiCode,
   FiExternalLink,
+  FiGithub,
 } from "react-icons/fi";
-import Modal from "@/components/Modal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDispatch } from "react-redux";
+import api from "@/lib/axios";
+import { openModal } from "@/lib/redux/slices/modalSlice";
+import PageLoader from "@/components/PageLoader";
 
 const projectSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -26,23 +32,12 @@ const projectSchema = z.object({
 });
 
 export default function ProjectsManagementPage() {
-  const [projects, setProjects] = useState([]);
+  const queryClient = useQueryClient();
+  const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [tagInput, setTagInput] = useState("");
-  const [currentTags, setCurrentTags] = useState([]);
-
-  // Modal State
-  const [modalConfig, setModalConfig] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    type: "info",
-    onConfirm: null,
-    confirmText: "OK",
-    showCancel: false,
-  });
+  const [techInput, setTechInput] = useState("");
+  const [currentTech, setCurrentTech] = useState([]);
 
   const {
     register,
@@ -54,28 +49,82 @@ export default function ProjectsManagementPage() {
     resolver: zodResolver(projectSchema),
   });
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  // Fetch Projects Data
+  const { data: projectsList, isLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data } = await api.get("/projects");
+      return data || [];
+    },
+  });
 
-  const fetchProjects = async () => {
-    try {
-      const response = await fetch("/api/projects");
-      const data = await response.json();
-      setProjects(data);
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-    }
-  };
+  // Save Mutation
+  const saveMutation = useMutation({
+    mutationFn: async (data) => {
+      const url = editingProject
+        ? `/projects/${editingProject._id}`
+        : "/projects";
+      const method = editingProject ? "put" : "post";
+      return api[method](url, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["projects"]);
+      handleCloseModal();
+      dispatch(
+        openModal({
+          title: "Success",
+          message: editingProject
+            ? "Project updated successfully!"
+            : "Project added successfully!",
+          type: "success",
+        }),
+      );
+    },
+    onError: (error) => {
+      dispatch(
+        openModal({
+          title: "Error",
+          message: error.message || "Failed to save project.",
+          type: "error",
+        }),
+      );
+    },
+  });
+
+  // Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      return api.delete(`/projects/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["projects"]);
+      dispatch(
+        openModal({
+          title: "Success",
+          message: "Project deleted successfully!",
+          type: "success",
+        }),
+      );
+    },
+    onError: (error) => {
+      dispatch(
+        openModal({
+          title: "Error",
+          message: error.message || "Failed to delete project.",
+          type: "error",
+        }),
+      );
+    },
+  });
 
   const handleOpenModal = (project) => {
     if (project) {
       setEditingProject(project);
-      setCurrentTags(project.tags || []);
+      setCurrentTech(project.tags || []);
       reset(project);
     } else {
       setEditingProject(null);
-      setCurrentTags([]);
+      setCurrentTech([]);
       reset({
         title: "",
         date: "",
@@ -93,108 +142,52 @@ export default function ProjectsManagementPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingProject(null);
-    setCurrentTags([]);
-    setTagInput("");
+    setCurrentTech([]);
+    setTechInput("");
     reset();
   };
 
-  const handleAddTag = () => {
-    if (tagInput.trim() && !currentTags.includes(tagInput.trim())) {
-      const newTags = [...currentTags, tagInput.trim()];
-      setCurrentTags(newTags);
-      setValue("tags", newTags);
-      setTagInput("");
+  const handleAddTech = () => {
+    if (techInput.trim() && !currentTech.includes(techInput.trim())) {
+      const newTech = [...currentTech, techInput.trim()];
+      setCurrentTech(newTech);
+      setValue("tags", newTech);
+      setTechInput("");
     }
   };
 
-  const handleRemoveTag = (tagToRemove) => {
-    const newTags = currentTags.filter((tag) => tag !== tagToRemove);
-    setCurrentTags(newTags);
-    setValue("tags", newTags);
+  const handleRemoveTech = (tagToRemove) => {
+    const newTech = currentTech.filter((tag) => tag !== tagToRemove);
+    setCurrentTech(newTech);
+    setValue("tags", newTech);
   };
 
-  const onSubmit = async (data) => {
-    setIsLoading(true);
-    try {
-      const url = editingProject
-        ? `/api/projects/${editingProject._id}`
-        : "/api/projects";
-      const method = editingProject ? "PUT" : "POST";
+  const onSubmit = (data) => {
+    saveMutation.mutate({ ...data, tags: currentTech });
+  };
 
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, tags: currentTags }),
-      });
-
-      if (response.ok) {
-        await fetchProjects();
-        handleCloseModal();
-        setModalConfig({
-          isOpen: true,
-          title: "Success",
-          message: editingProject
-            ? "Project updated successfully!"
-            : "Project added successfully!",
-          type: "success",
-        });
-      } else {
-        throw new Error("Failed to save");
-      }
-    } catch (error) {
-      console.error("Error saving project:", error);
-      setModalConfig({
+  const handleDelete = (id) => {
+    dispatch(
+      openModal({
         isOpen: true,
-        title: "Error",
-        message: "Failed to save project. Please try again.",
-        type: "error",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    setModalConfig({
-      isOpen: true,
-      title: "Delete Project",
-      message:
-        "Are you sure you want to delete this project? This action cannot be undone.",
-      type: "warning",
-      showCancel: true,
-      confirmText: "Delete",
-      onConfirm: async () => {
-        try {
-          const response = await fetch(`/api/projects/${id}`, {
-            method: "DELETE",
-          });
-          if (response.ok) {
-            await fetchProjects();
-            setModalConfig({
-              isOpen: true,
-              title: "Success",
-              message: "Project deleted successfully!",
-              type: "success",
-            });
-          } else {
-            throw new Error("Failed to delete");
-          }
-        } catch (error) {
-          console.error("Error deleting project:", error);
-          setModalConfig({
-            isOpen: true,
-            title: "Error",
-            message: "Failed to delete project.",
-            type: "error",
-          });
-        }
-      },
-    });
+        title: "Delete Project",
+        message:
+          "Are you sure you want to delete this project? This action cannot be undone.",
+        type: "warning",
+        showCancel: true,
+        confirmText: "Delete",
+        onConfirm: () => deleteMutation.mutate(id),
+      }),
+    );
   };
 
   const closeGlobalModal = () => {
-    setModalConfig((prev) => ({ ...prev, isOpen: false }));
+    // Config handled by Redux now
   };
+
+  if (isLoading) {
+    return <PageLoader />;
+  }
 
   return (
     <div className="max-w-[1400px]">
@@ -212,7 +205,7 @@ export default function ProjectsManagementPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects.map((project) => (
+        {projectsList?.map((project) => (
           <div
             key={project._id}
             className="bg-[#0f0f14] border border-white/10 rounded-xl overflow-hidden transition-all hover:border-purple-600/50"
@@ -273,7 +266,7 @@ export default function ProjectsManagementPage() {
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-xs text-purple-600 hover:underline"
                   >
-                    <FiExternalLink /> GitHub
+                    <FiGithub /> GitHub
                   </a>
                 )}
                 {project.webapp && (
@@ -399,7 +392,7 @@ export default function ProjectsManagementPage() {
                       setValue("category", "static", { shouldValidate: true })
                     }
                     className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                      projects.find((p) => p.category === "static")
+                      projectsList?.find((p) => p.category === "static")
                         ? "bg-purple-600/20 border-purple-600 text-purple-400"
                         : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
                     }`}
@@ -412,7 +405,7 @@ export default function ProjectsManagementPage() {
                       setValue("category", "live", { shouldValidate: true })
                     }
                     className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                      projects.find((p) => p.category === "live")
+                      projectsList?.find((p) => p.category === "live")
                         ? "bg-purple-600/20 border-purple-600 text-purple-400"
                         : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
                     }`}
@@ -421,7 +414,7 @@ export default function ProjectsManagementPage() {
                   </button>
 
                   {/* Dynamic Categories from existing projects */}
-                  {[...new Set(projects.map((p) => p.category))]
+                  {[...new Set(projectsList?.map((p) => p.category))]
                     .filter((c) => c !== "static" && c !== "live" && c)
                     .map((cat, idx) => (
                       <button
@@ -449,24 +442,24 @@ export default function ProjectsManagementPage() {
                 </label>
                 <div className="flex gap-2">
                   <input
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
+                    value={techInput}
+                    onChange={(e) => setTechInput(e.target.value)}
                     onKeyPress={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), handleAddTag())
+                      e.key === "Enter" && (e.preventDefault(), handleAddTech())
                     }
                     placeholder="Add a tag and press Enter"
                     className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-base text-gray-100 focus:outline-none focus:border-purple-600"
                   />
                   <button
                     type="button"
-                    onClick={handleAddTag}
+                    onClick={handleAddTech}
                     className="bg-purple-600/10 border border-purple-600/30 rounded-lg px-4 py-3 text-purple-600 cursor-pointer hover:bg-purple-600/20"
                   >
                     Add
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {currentTags.map((tag, idx) => (
+                  {currentTech.map((tag, idx) => (
                     <span
                       key={idx}
                       className="bg-purple-600/10 border border-purple-600/30 rounded px-3 py-1 text-sm text-purple-600 flex items-center gap-2"
@@ -474,7 +467,7 @@ export default function ProjectsManagementPage() {
                       {tag}
                       <button
                         type="button"
-                        onClick={() => handleRemoveTag(tag)}
+                        onClick={() => handleRemoveTech(tag)}
                         className="text-red-500 hover:text-red-400"
                       >
                         <FiX />
@@ -525,27 +518,16 @@ export default function ProjectsManagementPage() {
 
               <button
                 type="submit"
-                disabled={isLoading}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 border-none rounded-lg px-6 py-3.5 text-base font-semibold text-white cursor-pointer flex items-center justify-center gap-2 mt-2 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={saveMutation.isPending}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 border-none rounded-lg px-6 py-3.5 text-base font-semibold text-white cursor-pointer flex items-center justify-center gap-2 mt-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiSave />
-                {isLoading ? "Saving..." : "Save Project"}
+                {saveMutation.isPending ? "Saving..." : "Save Project"}
               </button>
             </form>
           </div>
         </div>
       )}
-      {/* Global Message Modal */}
-      <Modal
-        isOpen={modalConfig.isOpen}
-        onClose={closeGlobalModal}
-        title={modalConfig.title}
-        message={modalConfig.message}
-        type={modalConfig.type}
-        onConfirm={modalConfig.onConfirm}
-        confirmText={modalConfig.confirmText}
-        showCancel={modalConfig.showCancel}
-      />
     </div>
   );
 }
