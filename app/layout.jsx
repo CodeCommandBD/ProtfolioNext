@@ -2,6 +2,8 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import StyledComponentsRegistry from "@/lib/registry";
+import StoreProvider from "@/components/StoreProvider";
+import QueryProvider from "@/lib/tanstack/QueryProvider";
 
 const poppins = Poppins({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -87,13 +89,17 @@ export default function RootLayout({ children }) {
         <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
       </head>
       <body className={poppins.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
-        >
-          <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
-        </ThemeProvider>
+        <StoreProvider>
+          <QueryProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              enableSystem={false}
+            >
+              <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+            </ThemeProvider>
+          </QueryProvider>
+        </StoreProvider>
       </body>
     </html>
   );

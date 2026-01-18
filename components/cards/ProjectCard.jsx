@@ -104,7 +104,7 @@ const Members = styled.div`
   padding-left: 10px;
 `;
 
-const Avatar = styled.img`
+const Avatar = styled(Image)`
   width: 38px;
   height: 38px;
   border-radius: 50%;
@@ -112,6 +112,7 @@ const Avatar = styled.img`
   background-color: ${({ theme }) => theme.white};
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   border: 3px solid ${({ theme }) => theme.card};
+  object-fit: cover;
 `;
 
 const Button = styled.a`
@@ -149,7 +150,13 @@ const ProjectCard = ({ project }) => {
       {project.member && project.member.length > 0 && (
         <Members>
           {project.member.map((member, index) => (
-            <Avatar key={index} src={member.img} alt={member.name} />
+            <Avatar
+              key={index}
+              src={member.img}
+              alt={member.name}
+              width={38}
+              height={38}
+            />
           ))}
         </Members>
       )}

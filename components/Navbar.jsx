@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import styled, { useTheme } from "styled-components";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleMobileMenu } from "@/lib/redux/slices/uiSlice";
 import { MenuRounded } from "@mui/icons-material";
 import ThemeToggle from "./ThemeToggle";
 
@@ -127,7 +129,8 @@ const MobileMenu = styled.ul`
 `;
 
 const Navbar = ({ bio }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const dispatch = useDispatch();
+  const { isMobileMenuOpen } = useSelector((state) => state.ui);
   const theme = useTheme();
   const resumeUrl = bio?.resume || null;
 
@@ -139,7 +142,7 @@ const Navbar = ({ bio }) => {
         >
           {bio?.name?.split(" ")[0] || "PORTFOLIO"}
         </NavLogo>
-        <MobileIcon onClick={() => setIsOpen(!isOpen)}>
+        <MobileIcon onClick={() => dispatch(toggleMobileMenu())}>
           <MenuRounded style={{ color: "inherit" }} />
         </MobileIcon>
 
@@ -151,18 +154,27 @@ const Navbar = ({ bio }) => {
           <NavLink href="#Education">Education</NavLink>
         </NavItems>
 
-        {isOpen && (
-          <MobileMenu $isOpen={isOpen}>
-            <NavLink onClick={() => setIsOpen(!isOpen)} href="#About">
+        {isMobileMenuOpen && (
+          <MobileMenu $isOpen={isMobileMenuOpen}>
+            <NavLink onClick={() => dispatch(toggleMobileMenu())} href="#About">
               About
             </NavLink>
-            <NavLink onClick={() => setIsOpen(!isOpen)} href="#Skills">
+            <NavLink
+              onClick={() => dispatch(toggleMobileMenu())}
+              href="#Skills"
+            >
               Skills
             </NavLink>
-            <NavLink onClick={() => setIsOpen(!isOpen)} href="#Experience">
+            <NavLink
+              onClick={() => dispatch(toggleMobileMenu())}
+              href="#Experience"
+            >
               Experience
             </NavLink>
-            <NavLink onClick={() => setIsOpen(!isOpen)} href="#Project">
+            <NavLink
+              onClick={() => dispatch(toggleMobileMenu())}
+              href="#Project"
+            >
               Project
             </NavLink>
             <NavLink onClick={() => setIsOpen(!isOpen)} href="#Education">

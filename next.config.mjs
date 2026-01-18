@@ -68,9 +68,7 @@ const nextConfig = {
       },
     ],
   },
-  compiler: {
-    styledComponents: true,
-  },
+
   compress: true, // Enable gzip compression
   skipTrailingSlashRedirect: true,
   serverExternalPackages: ["mongoose", "bcryptjs"],

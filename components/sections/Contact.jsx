@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { useForm } from "react-hook-form";
+import { useContactMutation } from "@/lib/tanstack/queries/useContact";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -208,8 +209,8 @@ const contactSchema = z.object({
 });
 
 const Contact = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const { mutate: sendMessage, isPending: isSubmitting } = useContactMutation();
 
   const {
     register,
@@ -221,32 +222,14 @@ const Contact = () => {
     mode: "onChange",
   });
 
-  const onSubmit = async (data) => {
-    setIsSubmitting(true);
-    setSubmitSuccess(false);
-
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
+  const onSubmit = (data) => {
+    sendMessage(data, {
+      onSuccess: () => {
         setSubmitSuccess(true);
         reset();
         setTimeout(() => setSubmitSuccess(false), 5000);
-      } else {
-        alert("Failed to send message. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      alert("Failed to send message. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+      },
+    });
   };
 
   return (

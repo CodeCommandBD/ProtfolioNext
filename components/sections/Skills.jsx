@@ -2,7 +2,9 @@
 
 import React from "react";
 import styled from "styled-components";
+import Image from "next/image";
 import Tilt from "react-parallax-tilt";
+import { useSkills } from "@/lib/tanstack/queries/useSkills";
 
 const Container = styled.div`
   display: flex;
@@ -164,12 +166,17 @@ const Percentage = styled.div`
   }
 `;
 
-const SkillImage = styled.img`
+const SkillImage = styled(Image)`
   width: 24px;
   height: 24px;
 `;
 
-const Skills = ({ skills = [] }) => {
+const Skills = () => {
+  const { data: skills = [], isLoading, error } = useSkills();
+
+  if (isLoading) return <Desc>Loading skills...</Desc>;
+  if (error) return <Desc>Error loading skills: {error.message}</Desc>;
+
   return (
     <Container id="Skills">
       <Wrapper>
@@ -188,7 +195,12 @@ const Skills = ({ skills = [] }) => {
                     <SkillItem key={`skill-item-${idx}`}>
                       <Percentage>{item.percentage || 50}%</Percentage>
                       <SkillInfo>
-                        <SkillImage src={item.image} alt={item.name} />
+                        <SkillImage
+                          src={item.image}
+                          alt={item.name}
+                          width={24}
+                          height={24}
+                        />
                         {item.name}
                       </SkillInfo>
                       <ProgressBar>

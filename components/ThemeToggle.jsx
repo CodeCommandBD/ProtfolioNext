@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleTheme } from "@/lib/redux/slices/themeSlice";
 import { useTheme } from "next-themes";
 import styled from "styled-components";
 import { BsFillSunFill, BsFillMoonStarsFill } from "react-icons/bs";
@@ -48,6 +50,8 @@ const ToggleButton = styled.button`
 `;
 
 const ThemeToggle = () => {
+  const dispatch = useDispatch();
+  const reduxTheme = useSelector((state) => state.theme.mode);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
@@ -56,21 +60,28 @@ const ThemeToggle = () => {
     setMounted(true);
   }, []);
 
+  // Sync Redux state with next-themes
+  React.useEffect(() => {
+    if (mounted && theme !== reduxTheme) {
+      setTheme(reduxTheme);
+    }
+  }, [reduxTheme, theme, setTheme, mounted]);
+
   if (!mounted) {
     return null;
   }
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+  const handleToggle = () => {
+    dispatch(toggleTheme());
   };
 
   return (
     <ToggleButton
-      onClick={toggleTheme}
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-      title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      onClick={handleToggle}
+      aria-label={`Switch to ${reduxTheme === "dark" ? "light" : "dark"} mode`}
+      title={`Switch to ${reduxTheme === "dark" ? "light" : "dark"} mode`}
     >
-      {theme === "dark" ? <BsFillSunFill /> : <BsFillMoonStarsFill />}
+      {reduxTheme === "dark" ? <BsFillSunFill /> : <BsFillMoonStarsFill />}
     </ToggleButton>
   );
 };

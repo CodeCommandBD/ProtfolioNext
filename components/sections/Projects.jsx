@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import styled from "styled-components";
+import { useDispatch, useSelector } from "react-redux";
+import { setCategory } from "@/lib/redux/slices/filterSlice";
+import { useProjects } from "@/lib/tanstack/queries/useProjects";
 import ProjectCard from "../cards/ProjectCard";
 
 const Container = styled.div`
@@ -95,8 +98,17 @@ const CardContainer = styled.div`
   justify-items: center;
 `;
 
-const Projects = ({ projects = [] }) => {
-  const [toggle, setToggle] = useState("all");
+const Projects = () => {
+  const dispatch = useDispatch();
+  const { selectedCategory } = useSelector((state) => state.filter);
+  const { data: projects = [], isLoading, error } = useProjects();
+
+  const handleToggle = (category) => {
+    dispatch(setCategory(category));
+  };
+
+  if (isLoading) return <Desc>Loading projects...</Desc>;
+  if (error) return <Desc>Error loading projects: {error.message}</Desc>;
 
   return (
     <Container id="Project">
@@ -108,34 +120,34 @@ const Projects = ({ projects = [] }) => {
         </Desc>
         <ToggleButtonGroup>
           <ToggleButton
-            $active={toggle === "all"}
-            onClick={() => setToggle("all")}
+            $active={selectedCategory === "all"}
+            onClick={() => handleToggle("all")}
           >
             All
           </ToggleButton>
           <Divider />
           <ToggleButton
-            $active={toggle === "static"}
-            onClick={() => setToggle("static")}
+            $active={selectedCategory === "static"}
+            onClick={() => handleToggle("static")}
           >
             Static / Interactive
           </ToggleButton>
           <Divider />
           <ToggleButton
-            $active={toggle === "live"}
-            onClick={() => setToggle("live")}
+            $active={selectedCategory === "live"}
+            onClick={() => handleToggle("live")}
           >
             Live Demo
           </ToggleButton>
         </ToggleButtonGroup>
         <CardContainer>
-          {toggle === "all" &&
+          {selectedCategory === "all" &&
             projects.map((project, index) => (
               <ProjectCard key={`project-${index}`} project={project} />
             ))}
-          {toggle !== "all" &&
+          {selectedCategory !== "all" &&
             projects
-              .filter((item) => item.category === toggle)
+              .filter((item) => item.category === selectedCategory)
               .map((project, index) => (
                 <ProjectCard key={`project-${index}`} project={project} />
               ))}
